@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>The phytoclass package</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<style type="text/css">.tabset>.tab {
+display: none;
+border: solid 1px black;
+padding: 5px; }
+.tabset>.tab.active {
+display: block; }
+.tabset>.tab>:first-child {
+display: none; }
+.tabset>.tabmenu {
+margin-bottom: 0;
+padding: 0; }
+.tabset>.tabmenu li {
+display: inline-block;
+margin: 0 2px 0 0; }
+.tabset>.tabmenu button {
+text-decoration: none;
+font-weight: normal; }
+.tabset>.tabmenu .active button {
+text-decoration: solid underline;
+font-weight: bold; }
+.tabset>.tabmenu .active button:before {
+content: "> "; }
+</style>
+<script>window.addEventListener('load', function() {
+  let tabIds = [];
+
+  function toggle(elem, from = 0, to = 0) {
+    elem[from].classList.remove("active");
+    elem[to].classList.add("active");
+    return to;
+  }
+
+  function initialize(tabs) {
+    const active = tabs.findIndex(x => x.classList.contains("active"));
+    tabs.forEach(function(x) {
+      tabIds.push(x.id);
+      x.dataset.id = x.id;
+      x.removeAttribute("id");
+      x.classList.add("tab");
+      x.classList.remove("active");
+    });
+    return toggle(tabs, 0, active * (active > 0));
+  }
+
+  // Implement
+  Array.from(document.querySelectorAll(".section.tabset")).forEach(section => {
+    const tabs = Array.from(section.querySelectorAll(":scope>.section"));
+    let active = initialize(tabs);
+
+    const ul = section.insertBefore(document.createElement("ul"), tabs[0]);
+    ul.classList.add("tabmenu");
+    tabs.forEach((tab, current) => {
+      const button = document.createElement("button");
+      ul.appendChild(document.createElement("li")).appendChild(button);
+      button.id = tab.dataset.id;
+      button.innerHTML = tab.children[0].innerHTML;
+      button.addEventListener("click", function() {
+        history.pushState(null, null, "#" + button.id);
+        toggle(tabs, active, current);
+        active = toggle(ul.children, active, current);
+      });
+    });
+    toggle(ul.children, 0, active);
+  });
+
+  // Navigation
+  function showHashTab() {
+    const buttonId = tabIds.find(x => ('#' + x) === location.hash);
+    if (!buttonId) return;
+    const button = document.getElementById(buttonId);
+    let el = button.parentElement.parentElement.parentElement;
+    while (el) {
+      if (
+        el.tagName === "SECTION"
+        && el.classList.contains("tab")
+        && !el.classList.contains("active")
+      ) {
+        document.getElementById(el.dataset.id).click();
+      }
+      el = el.parentElement;
+    }
+    button.click();
+    button.scrollIntoView();
+  }
+  showHashTab();
+  window.addEventListener("hashchange", showHashTab);
+});
+
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">
+
+div.csl-bib-body { }
+div.csl-entry {
+clear: both;
+}
+.hanging div.csl-entry {
+margin-left:2em;
+text-indent:-2em;
+}
+div.csl-left-margin {
+min-width:2em;
+float:left;
+}
+div.csl-right-inline {
+margin-left:2em;
+padding-left:1em;
+}
+div.csl-indent {
+margin-left: 2em;
+}
+</style>
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The phytoclass package</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(phytoclass)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The <em>phytoclass</em> package uses non-negative matrix
+factorization and simulated annealing to determine the biomass of
+different phytoplankton groups from pigment concentrations. The
+methodology is discussed in <span class="citation">(Hayward, Pinkerton,
+and Gutierrez‐Rodriguez 2023)</span> and is similar to the CHEMTAX
+method of <span class="citation">Mackey et al. (1996)</span>.</p>
+<p>For ease of use, most functions have default options. However the
+user also has the option to set their own parameters within the program,
+and instructions on how to do this are listed for each function.</p>
+<p>It is important to highlight that naming conventions for
+phytoplankton groups and their pigments should be adhered to when using
+the default samples. For example, the user should ensure that pigment
+names in their sample matrix (S) match the same pigment names in the
+pigment – Chl a ratio matrix (F).</p>
+<p>At present the use of DV Chl a with Prochlorococcus is not supported,
+however it will be in a future release.</p>
+<p>The main function of the package is
+<strong>simulated_annealing()</strong> with an associated helper
+function <strong>Cluster()</strong></p>
+<p>Other helper functions covered in this document are:</p>
+<ol style="list-style-type: decimal">
+<li>Matrix_checks</li>
+<li>Bounded_weights</li>
+<li>Steepest_Desc</li>
+<li>NNLS_MF</li>
+</ol>
+<div id="main-function-simulated_annealing" class="section level2 tabset">
+<h2 class="tabset">Main function: simulated_annealing()</h2>
+<p>This is the main function for the <em>phytoclass</em> package.</p>
+<p>It takes in the inputs (listed below) and returns the updated pigment
+to Chl a ratios, the Chl a biomass of each phytoplankton group, error
+associated with each group, and a graph displaying the Chl a
+concentration for each group.</p>
+<p>It is important that samples are clustered appropriately before using
+the function (see the Cluster function).</p>
+<p>Arguments:</p>
+<p><strong>S</strong> = Sample matrix – a matrix of pigment samples.
+Ensure that Chl a is the final column</p>
+<p><strong>F</strong> = Pigment to Chl a matrix. If left blank default
+values will be used. Ensure that pigment columns are in the same order
+as <strong>S</strong> and column naming conventions match.</p>
+<p><strong>user_defined_min_max</strong> = If blank default values are
+used. To create different min_max values, follow the same structure as
+the phytoclass::min_max file. See the example below.</p>
+<p><strong>do_matrix_checks</strong> = this should only be set to true
+when using the default values. This will remove pigment columns that
+have column sums of 0. Set to FALSE if using customised names for
+pigments and phytoplankton groups.</p>
+<p><strong>niter</strong> = number of iterations. Default value is
+500.</p>
+<p><strong>step</strong> = step ratio used. Default value is 0.009.</p>
+<p><strong>weight.upper.bound</strong> = the upper limit of the weights
+applied. Default value is 30.</p>
+<p>When using the default values, the only argument required is the
+sample matrix. However, make sure that the pigment names match those in
+the built-in pigment to Chl matrix Fm.</p>
+<p>For the examples that follow the argument <em>niter</em> equals one
+for processing speed, but should be set much higher to obtain
+convergence.</p>
+<div id="cluster-function" class="section level3">
+<h3>Cluster function</h3>
+<p>Prior to analysis using simulated annealing, pigment samples require
+clustering.</p>
+<p>The <em>Cluster</em> function divides all pigment concentrations by
+the total Chl a concentration. Following this the data undergoes BoxCox
+transformation, and the data is hierarchically clustered using the Ward
+method based on the Manhattan distances between pigment samples. The
+DynamicTreeCut method of <span class="citation">(Langfelder, Zhang, and
+Horvath 2008)</span> is then used to prune the dendogram into reasonable
+clusters of specified size(s).</p>
+<p>The function returns a list of the clusters and the cluster
+dendrogram.</p>
+<p>An example, using the built-in sample data set Sm:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>Cluster.result <span class="ot">&lt;-</span> <span class="fu">Cluster</span>(Sm, <span class="dv">14</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt;  ..done.</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># list of clusters</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>Cluster.result<span class="sc">$</span>cluster.list</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;    Per     X19but      Fuco        Neox        Pra        Viol     X19hex</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; 1    0 0.03024000 0.0622500 0.005570000 0.01407000 0.007590000 0.08224000</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; 2    0 0.01084000 0.0286400 0.001110000 0.00351000 0.001440000 0.01497000</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; 3    0 0.01510000 0.1417000 0.004000000 0.00800000 0.002600000 0.02550000</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; 4    0 0.02200000 0.1090000 0.004000000 0.00800000 0.003000000 0.04200000</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; 5    0 0.02052662 0.2714934 0.017692288 0.01994758 0.000000000 0.03011548</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 6    0 0.02216177 0.1654257 0.012242414 0.01956286 0.000000000 0.02721049</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 7    0 0.01438545 0.2555594 0.020671983 0.04736366 0.011507712 0.02167651</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 8    0 0.02662521 0.2205439 0.024444776 0.06623835 0.027029275 0.04015983</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt; 9    0 0.05315834 0.2584586 0.016123905 0.04701666 0.011387548 0.08065818</span></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt; 10   0 0.03092146 0.1639481 0.013383240 0.01262176 0.008793182 0.05881285</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; 11   0 0.02725515 0.1966991 0.009916299 0.01832477 0.009112193 0.05488214</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; 12   0 0.01678833 0.1755048 0.008821737 0.02676049 0.006637964 0.02189435</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; 13   0 0.02444961 0.1273596 0.007049435 0.01323978 0.004447137 0.02218985</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; 14   0 0.01567523 0.1052905 0.006144340 0.01372236 0.006294480 0.02208074</span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; 15   0 0.03108003 0.0874373 0.011728700 0.02004430 0.005772257 0.04855466</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;           Allo         Zea Lut ChlcMGDG.18 ChlcMGDG.14      Chl.b     Tchla</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; 1  0.001880000 0.002010000   0           0           0 0.08661000 0.4585100</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; 2  0.001440000 0.001910000   0           0           0 0.01473000 0.1457100</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; 3  0.000800000 0.001000000   0           0           0 0.03120000 0.2117000</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; 4  0.003000000 0.003000000   0           0           0 0.03200000 0.2060000</span></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; 5  0.000000000 0.030828916   0           0           0 0.09243326 0.4812043</span></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; 6  0.000000000 0.017661542   0           0           0 0.08720595 0.3409079</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt; 7  0.009032764 0.018938989   0           0           0 0.14213442 0.4892902</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt; 8  0.007170750 0.013507988   0           0           0 0.18532190 0.5711149</span></span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt; 9  0.010093841 0.016835362   0           0           0 0.13198111 0.5776707</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; 10 0.011139374 0.012782671   0           0           0 0.05213182 0.3486558</span></span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; 11 0.013767971 0.012392348   0           0           0 0.08734698 0.4556423</span></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; 12 0.008302439 0.010946550   0           0           0 0.07005955 0.3497736</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; 13 0.005887899 0.010324368   0           0           0 0.03627212 0.2367185</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; 14 0.004908419 0.009914413   0           0           0 0.03735579 0.2117071</span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; 15 0.009256850 0.009871839   0           0           0 0.09414383 0.3014690</span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt;    Clust</span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt; 1      1</span></span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; 2      1</span></span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="co">#&gt; 3      1</span></span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="co">#&gt; 4      1</span></span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co">#&gt; 5      1</span></span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="co">#&gt; 6      1</span></span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a><span class="co">#&gt; 7      1</span></span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a><span class="co">#&gt; 8      1</span></span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a><span class="co">#&gt; 9      1</span></span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a><span class="co">#&gt; 10     1</span></span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a><span class="co">#&gt; 11     1</span></span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a><span class="co">#&gt; 12     1</span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a><span class="co">#&gt; 13     1</span></span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a><span class="co">#&gt; 14     1</span></span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a><span class="co">#&gt; 15     1</span></span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a><span class="co">#&gt;       Per     X19but      Fuco       Neox        Pra       Viol     X19hex</span></span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a><span class="co">#&gt; 1  0.0000 0.01560000 0.2172000 0.00640000 0.00920000 0.00000000 0.01740000</span></span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a><span class="co">#&gt; 2  0.0000 0.01770000 0.2347000 0.00700000 0.01150000 0.00000000 0.01890000</span></span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a><span class="co">#&gt; 3  0.0000 0.02520000 0.2952000 0.00990000 0.01300000 0.00000000 0.02110000</span></span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a><span class="co">#&gt; 4  0.0102 0.02220000 0.2275000 0.00760000 0.01070000 0.00000000 0.01900000</span></span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a><span class="co">#&gt; 5  0.0000 0.04520000 0.4484000 0.00370000 0.00650000 0.00000000 0.13170000</span></span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a><span class="co">#&gt; 6  0.0000 0.05180000 0.6228000 0.00490000 0.00750000 0.00400000 0.13210000</span></span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a><span class="co">#&gt; 7  0.0000 0.04906269 0.5266418 0.01733435 0.03446357 0.00000000 0.12044287</span></span>
+<span id="cb3-62"><a href="#cb3-62" tabindex="-1"></a><span class="co">#&gt; 8  0.0000 0.02619187 0.6025477 0.03894861 0.04929322 0.03489396 0.10082727</span></span>
+<span id="cb3-63"><a href="#cb3-63" tabindex="-1"></a><span class="co">#&gt; 9  0.0000 0.06542364 0.6603459 0.04421571 0.11285620 0.06456028 0.13896777</span></span>
+<span id="cb3-64"><a href="#cb3-64" tabindex="-1"></a><span class="co">#&gt; 10 0.0000 0.06040911 0.4494852 0.02786263 0.07757631 0.02525825 0.10999693</span></span>
+<span id="cb3-65"><a href="#cb3-65" tabindex="-1"></a><span class="co">#&gt; 11 0.0000 0.07577285 0.3920489 0.01723917 0.05136883 0.02089911 0.12859331</span></span>
+<span id="cb3-66"><a href="#cb3-66" tabindex="-1"></a><span class="co">#&gt; 12 0.0000 0.06067605 0.4112795 0.02176825 0.07620416 0.02259290 0.08973832</span></span>
+<span id="cb3-67"><a href="#cb3-67" tabindex="-1"></a><span class="co">#&gt; 13 0.0000 0.04388275 0.6257830 0.01237372 0.03347165 0.01349518 0.12822965</span></span>
+<span id="cb3-68"><a href="#cb3-68" tabindex="-1"></a><span class="co">#&gt; 14 0.0000 0.03971444 0.4332551 0.01440275 0.02657611 0.01056049 0.09220387</span></span>
+<span id="cb3-69"><a href="#cb3-69" tabindex="-1"></a><span class="co">#&gt;          Allo        Zea Lut ChlcMGDG.18 ChlcMGDG.14     Chl.b     Tchla Clust</span></span>
+<span id="cb3-70"><a href="#cb3-70" tabindex="-1"></a><span class="co">#&gt; 1  0.00580000 0.00360000   0           0           0 0.0570000 0.6127000     2</span></span>
+<span id="cb3-71"><a href="#cb3-71" tabindex="-1"></a><span class="co">#&gt; 2  0.00540000 0.00380000   0           0           0 0.0619000 0.6207000     2</span></span>
+<span id="cb3-72"><a href="#cb3-72" tabindex="-1"></a><span class="co">#&gt; 3  0.00140000 0.00760000   0           0           0 0.0578000 0.5302000     2</span></span>
+<span id="cb3-73"><a href="#cb3-73" tabindex="-1"></a><span class="co">#&gt; 4  0.00000000 0.00300000   0           0           0 0.0453000 0.4057000     2</span></span>
+<span id="cb3-74"><a href="#cb3-74" tabindex="-1"></a><span class="co">#&gt; 5  0.00440000 0.00230000   0           0           0 0.0093000 0.6885000     2</span></span>
+<span id="cb3-75"><a href="#cb3-75" tabindex="-1"></a><span class="co">#&gt; 6  0.05970000 0.00350000   0           0           0 0.0121000 1.0849000     2</span></span>
+<span id="cb3-76"><a href="#cb3-76" tabindex="-1"></a><span class="co">#&gt; 7  0.02999001 0.03996619   0           0           0 0.1532505 1.0396607     2</span></span>
+<span id="cb3-77"><a href="#cb3-77" tabindex="-1"></a><span class="co">#&gt; 8  0.03161029 0.03631312   0           0           0 0.1646133 1.3811642     2</span></span>
+<span id="cb3-78"><a href="#cb3-78" tabindex="-1"></a><span class="co">#&gt; 9  0.01600105 0.02867069   0           0           0 0.4172947 1.7413395     2</span></span>
+<span id="cb3-79"><a href="#cb3-79" tabindex="-1"></a><span class="co">#&gt; 10 0.01924960 0.02058191   0           0           0 0.2601561 1.0739310     2</span></span>
+<span id="cb3-80"><a href="#cb3-80" tabindex="-1"></a><span class="co">#&gt; 11 0.02455042 0.02006658   0           0           0 0.2239172 0.9909010     2</span></span>
+<span id="cb3-81"><a href="#cb3-81" tabindex="-1"></a><span class="co">#&gt; 12 0.01671921 0.01921277   0           0           0 0.2368608 0.9520484     2</span></span>
+<span id="cb3-82"><a href="#cb3-82" tabindex="-1"></a><span class="co">#&gt; 13 0.01818973 0.01760174   0           0           0 0.1557938 1.2494685     2</span></span>
+<span id="cb3-83"><a href="#cb3-83" tabindex="-1"></a><span class="co">#&gt; 14 0.01413191 0.01298448   0           0           0 0.1209073 0.9190665     2</span></span>
+<span id="cb3-84"><a href="#cb3-84" tabindex="-1"></a><span class="co"># plot of clusters</span></span>
+<span id="cb3-85"><a href="#cb3-85" tabindex="-1"></a><span class="fu">plot</span>(Cluster.result<span class="sc">$</span>cluster.plot)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="example-without-clustering" class="section level3">
+<h3>Example without clustering</h3>
+<p>The example here uses the built-in sample matrix Sm.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="st">&quot;7683&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>Results <span class="ot">&lt;-</span> <span class="fu">simulated_annealing</span>(Sm, <span class="at">niter =</span> <span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">condition number</span><span class="st">`</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] 657.199</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>Results<span class="sc">$</span>RMSE</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.02824877</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>Results<span class="sc">$</span>MAE</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;          Per       X19but         Fuco         Neox          Pra         Viol </span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 6.011970e-03 5.719842e-05 7.020613e-04 2.025538e-02 5.578652e-03 9.209880e-03 </span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;       X19hex         Allo          Zea        Chl.b        Tchla </span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 2.071493e-04 7.696124e-04 1.688336e-03 2.923134e-03 4.260736e-03</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>Results<span class="sc">$</span>Error</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;                 Per        X19but          Fuco        Neox           Pra</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; 1257  -4.375017e-04  1.436914e-04 -1.367541e-02 0.002095977 -0.0044146916</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; 1278  -6.341458e-04  2.082765e-04 -1.982210e-02 0.001494711  0.0005021170</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; 1908  -5.213432e-04  1.712280e-04 -1.629612e-02 0.003875528 -0.0033189125</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 1909  -4.545505e-04  1.492909e-04 -1.420832e-02 0.004027758 -0.0022669636</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; 1914  -1.117572e-04  3.670511e-05 -3.493302e-03 0.007185485 -0.0004990658</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt; 1915  -4.311009e-05  1.415892e-05 -1.347533e-03 0.006979788  0.0001086053</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="co">#&gt; 5614   0.000000e+00 -7.539801e-05  7.175785e-03 0.005367296  0.0016669597</span></span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="co">#&gt; 5647   0.000000e+00 -6.699265e-05  6.375829e-03 0.002216187  0.0023952339</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="co">#&gt; 5653   0.000000e+00 -4.109548e-05  3.911143e-03 0.002005720  0.0018169951</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt; 6770   0.000000e+00 -6.845036e-05  6.514562e-03 0.005358101  0.0012502294</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 8425   0.000000e+00 -3.615574e-05  3.441017e-03 0.004764743 -0.0002331778</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 8426   0.000000e+00 -2.747748e-05  2.615089e-03 0.013445140 -0.0014041314</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 9538   0.000000e+00 -1.555110e-05  1.480030e-03 0.011252135 -0.0007135439</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 9568   0.000000e+00 -5.909046e-05  5.623762e-03 0.011991630  0.0096119860</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 9625  -7.156523e-05  2.350461e-05 -2.236983e-03 0.012001906  0.0041476172</span></span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="co">#&gt; 9626   0.000000e+00 -2.853634e-05  2.715862e-03 0.011407619  0.0154806583</span></span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="co">#&gt; 9838  -5.254946e-05  1.725914e-05 -1.642589e-03 0.006676976  0.0053680515</span></span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="co">#&gt; 9839   0.000000e+00 -4.044992e-05  3.849703e-03 0.006858516  0.0096033048</span></span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="co">#&gt; 9845   0.000000e+00 -1.543450e-05  1.468934e-03 0.006297694  0.0061964742</span></span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="co">#&gt; 9860   0.000000e+00 -1.059087e-05  1.007955e-03 0.002993529  0.0005632244</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="co">#&gt; 9861   0.000000e+00 -1.857334e-05  1.767664e-03 0.004336853  0.0083489344</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="co">#&gt; 9904   0.000000e+00 -4.805408e-07  4.573406e-05 0.001983283 -0.0004335829</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="co">#&gt; 9913  -4.080994e-05  1.340346e-05 -1.275635e-03 0.004885849 -0.0004095846</span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="co">#&gt; 9938   0.000000e+00 -5.452353e-05  5.189118e-03 0.014864124  0.0011623559</span></span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a><span class="co">#&gt; 9980   0.000000e+00 -2.031303e-05  1.933233e-03 0.006259026 -0.0008556170</span></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="co">#&gt; 10081  0.000000e+00 -2.827619e-05  2.691104e-03 0.006505339  0.0106384741</span></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="co">#&gt; 10082  0.000000e+00 -3.510745e-05  3.341249e-03 0.009921212  0.0070419900</span></span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="co">#&gt; 10089  0.000000e+00 -4.405819e-05  4.193110e-03 0.008991738  0.0091648056</span></span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="co">#&gt; 10121  0.000000e+00 -1.117787e-05  1.063821e-03 0.011208667 -0.0022677772</span></span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a><span class="co">#&gt;                Viol        X19hex          Allo           Zea         Chl.b</span></span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a><span class="co">#&gt; 1257  -1.419110e-03 -9.027724e-04 -5.557261e-04 -5.377101e-03  8.203113e-03</span></span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a><span class="co">#&gt; 1278  -2.176833e-04 -1.308542e-03 -8.055086e-04 -2.459423e-04 -3.458683e-03</span></span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a><span class="co">#&gt; 1908  -3.100576e-03 -1.075777e-03 -6.622237e-04 -4.953725e-04  3.524326e-03</span></span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a><span class="co">#&gt; 1909  -3.320766e-03 -9.379522e-04 -5.773819e-04 -7.398125e-04  2.227136e-03</span></span>
+<span id="cb5-46"><a href="#cb5-46" tabindex="-1"></a><span class="co">#&gt; 1914  -3.329905e-03 -2.306079e-04 -1.419569e-04 -4.334308e-05 -8.799421e-04</span></span>
+<span id="cb5-47"><a href="#cb5-47" tabindex="-1"></a><span class="co">#&gt; 1915  -3.357041e-03 -8.895646e-05 -5.475956e-05 -6.678027e-04 -1.194183e-03</span></span>
+<span id="cb5-48"><a href="#cb5-48" tabindex="-1"></a><span class="co">#&gt; 5614   6.692301e-04  4.737044e-04  2.916016e-04 -3.251167e-03 -2.306327e-03</span></span>
+<span id="cb5-49"><a href="#cb5-49" tabindex="-1"></a><span class="co">#&gt; 5647  -5.831693e-04  4.208959e-04  2.590939e-04  7.910798e-05 -3.742790e-03</span></span>
+<span id="cb5-50"><a href="#cb5-50" tabindex="-1"></a><span class="co">#&gt; 5653   5.983657e-04  2.581913e-04  1.589367e-04  4.852742e-05 -3.458195e-03</span></span>
+<span id="cb5-51"><a href="#cb5-51" tabindex="-1"></a><span class="co">#&gt; 6770   5.871137e-04  4.300542e-04  2.647315e-04  8.082931e-05 -3.452792e-03</span></span>
+<span id="cb5-52"><a href="#cb5-52" tabindex="-1"></a><span class="co">#&gt; 8425  -4.125817e-03  2.271563e-04  1.398322e-04  4.269435e-05  6.323017e-04</span></span>
+<span id="cb5-53"><a href="#cb5-53" tabindex="-1"></a><span class="co">#&gt; 8426  -5.246586e-03  1.726333e-04  0.000000e+00  3.244667e-05 -2.512429e-04</span></span>
+<span id="cb5-54"><a href="#cb5-54" tabindex="-1"></a><span class="co">#&gt; 9538  -6.879749e-03  9.770316e-05  0.000000e+00  1.836345e-05 -7.900722e-05</span></span>
+<span id="cb5-55"><a href="#cb5-55" tabindex="-1"></a><span class="co">#&gt; 9568   2.534234e-03  3.712486e-04  2.285322e-04  6.977671e-05 -2.021434e-02</span></span>
+<span id="cb5-56"><a href="#cb5-56" tabindex="-1"></a><span class="co">#&gt; 9625   1.336949e-03 -1.476728e-04 -9.090402e-05 -2.775532e-05 -1.178441e-02</span></span>
+<span id="cb5-57"><a href="#cb5-57" tabindex="-1"></a><span class="co">#&gt; 9626   4.327619e-03  1.792857e-04  1.103642e-04 -2.565514e-03 -2.912575e-02</span></span>
+<span id="cb5-58"><a href="#cb5-58" tabindex="-1"></a><span class="co">#&gt; 9838   1.511350e-03 -1.084343e-04 -6.674969e-05 -1.609497e-03 -1.100001e-02</span></span>
+<span id="cb5-59"><a href="#cb5-59" tabindex="-1"></a><span class="co">#&gt; 9839   2.464689e-03  2.541354e-04  1.564399e-04  4.776511e-05 -1.852606e-02</span></span>
+<span id="cb5-60"><a href="#cb5-60" tabindex="-1"></a><span class="co">#&gt; 9845   1.789576e-03  9.697062e-05  5.969290e-05 -5.119675e-04 -1.253225e-02</span></span>
+<span id="cb5-61"><a href="#cb5-61" tabindex="-1"></a><span class="co">#&gt; 9860   2.416978e-04  6.653942e-05  4.096015e-05  1.250618e-05 -1.968102e-03</span></span>
+<span id="cb5-62"><a href="#cb5-62" tabindex="-1"></a><span class="co">#&gt; 9861   2.304167e-03  1.166911e-04  7.183235e-05 -4.910641e-04 -1.548521e-02</span></span>
+<span id="cb5-63"><a href="#cb5-63" tabindex="-1"></a><span class="co">#&gt; 9904  -6.124270e-05  3.019102e-06  1.858490e-06  5.674445e-07  1.789799e-05</span></span>
+<span id="cb5-64"><a href="#cb5-64" tabindex="-1"></a><span class="co">#&gt; 9913  -7.071037e-06 -8.421016e-05 -5.183785e-05 -1.582742e-05 -1.230509e-03</span></span>
+<span id="cb5-65"><a href="#cb5-65" tabindex="-1"></a><span class="co">#&gt; 9938   7.797870e-04  3.425559e-04  2.108696e-04  6.438387e-05 -6.945725e-03</span></span>
+<span id="cb5-66"><a href="#cb5-66" tabindex="-1"></a><span class="co">#&gt; 9980  -2.545271e-05  1.276210e-04  7.856058e-05  2.398655e-05 -6.398623e-04</span></span>
+<span id="cb5-67"><a href="#cb5-67" tabindex="-1"></a><span class="co">#&gt; 10081  2.932777e-03  1.776513e-04  1.093581e-04  3.338981e-05 -2.038251e-02</span></span>
+<span id="cb5-68"><a href="#cb5-68" tabindex="-1"></a><span class="co">#&gt; 10082  2.143520e-03  2.205702e-04  1.357780e-04  4.145649e-05 -1.541395e-02</span></span>
+<span id="cb5-69"><a href="#cb5-69" tabindex="-1"></a><span class="co">#&gt; 10089  2.687163e-03  2.768052e-04  1.703949e-04  5.202593e-05 -1.863018e-02</span></span>
+<span id="cb5-70"><a href="#cb5-70" tabindex="-1"></a><span class="co">#&gt; 10121 -2.830618e-04  7.022738e-05  4.323037e-05  1.319934e-05 -1.295705e-04</span></span>
+<span id="cb5-71"><a href="#cb5-71" tabindex="-1"></a><span class="co">#&gt;               Tchla</span></span>
+<span id="cb5-72"><a href="#cb5-72" tabindex="-1"></a><span class="co">#&gt; 1257   0.1836063323</span></span>
+<span id="cb5-73"><a href="#cb5-73" tabindex="-1"></a><span class="co">#&gt; 1278   0.2661319733</span></span>
+<span id="cb5-74"><a href="#cb5-74" tabindex="-1"></a><span class="co">#&gt; 1908   0.2187921029</span></span>
+<span id="cb5-75"><a href="#cb5-75" tabindex="-1"></a><span class="co">#&gt; 1909   0.1907612161</span></span>
+<span id="cb5-76"><a href="#cb5-76" tabindex="-1"></a><span class="co">#&gt; 1914   0.0469011480</span></span>
+<span id="cb5-77"><a href="#cb5-77" tabindex="-1"></a><span class="co">#&gt; 1915   0.0180920125</span></span>
+<span id="cb5-78"><a href="#cb5-78" tabindex="-1"></a><span class="co">#&gt; 5614  -0.0963422444</span></span>
+<span id="cb5-79"><a href="#cb5-79" tabindex="-1"></a><span class="co">#&gt; 5647  -0.0856020231</span></span>
+<span id="cb5-80"><a href="#cb5-80" tabindex="-1"></a><span class="co">#&gt; 5653  -0.0525110834</span></span>
+<span id="cb5-81"><a href="#cb5-81" tabindex="-1"></a><span class="co">#&gt; 6770  -0.0874646560</span></span>
+<span id="cb5-82"><a href="#cb5-82" tabindex="-1"></a><span class="co">#&gt; 8425  -0.0461991668</span></span>
+<span id="cb5-83"><a href="#cb5-83" tabindex="-1"></a><span class="co">#&gt; 8426  -0.0351102453</span></span>
+<span id="cb5-84"><a href="#cb5-84" tabindex="-1"></a><span class="co">#&gt; 9538  -0.0198709211</span></span>
+<span id="cb5-85"><a href="#cb5-85" tabindex="-1"></a><span class="co">#&gt; 9568  -0.0755047455</span></span>
+<span id="cb5-86"><a href="#cb5-86" tabindex="-1"></a><span class="co">#&gt; 9625   0.0300337796</span></span>
+<span id="cb5-87"><a href="#cb5-87" tabindex="-1"></a><span class="co">#&gt; 9626  -0.0364632255</span></span>
+<span id="cb5-88"><a href="#cb5-88" tabindex="-1"></a><span class="co">#&gt; 9838   0.0220534306</span></span>
+<span id="cb5-89"><a href="#cb5-89" tabindex="-1"></a><span class="co">#&gt; 9839  -0.0516861947</span></span>
+<span id="cb5-90"><a href="#cb5-90" tabindex="-1"></a><span class="co">#&gt; 9845  -0.0197219370</span></span>
+<span id="cb5-91"><a href="#cb5-91" tabindex="-1"></a><span class="co">#&gt; 9860  -0.0135328224</span></span>
+<span id="cb5-92"><a href="#cb5-92" tabindex="-1"></a><span class="co">#&gt; 9861  -0.0237326900</span></span>
+<span id="cb5-93"><a href="#cb5-93" tabindex="-1"></a><span class="co">#&gt; 9904  -0.0006140265</span></span>
+<span id="cb5-94"><a href="#cb5-94" tabindex="-1"></a><span class="co">#&gt; 9913   0.0171267069</span></span>
+<span id="cb5-95"><a href="#cb5-95" tabindex="-1"></a><span class="co">#&gt; 9938  -0.0696692033</span></span>
+<span id="cb5-96"><a href="#cb5-96" tabindex="-1"></a><span class="co">#&gt; 9980  -0.0259556293</span></span>
+<span id="cb5-97"><a href="#cb5-97" tabindex="-1"></a><span class="co">#&gt; 10081 -0.0361308140</span></span>
+<span id="cb5-98"><a href="#cb5-98" tabindex="-1"></a><span class="co">#&gt; 10082 -0.0448596846</span></span>
+<span id="cb5-99"><a href="#cb5-99" tabindex="-1"></a><span class="co">#&gt; 10089 -0.0562967818</span></span>
+<span id="cb5-100"><a href="#cb5-100" tabindex="-1"></a><span class="co">#&gt; 10121 -0.0142828814</span></span>
+<span id="cb5-101"><a href="#cb5-101" tabindex="-1"></a></span>
+<span id="cb5-102"><a href="#cb5-102" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">F matrix</span><span class="st">`</span></span>
+<span id="cb5-103"><a href="#cb5-103" tabindex="-1"></a><span class="co">#&gt;                      Per X19but   Fuco   Neox    Pra   Viol X19hex   Allo</span></span>
+<span id="cb5-104"><a href="#cb5-104" tabindex="-1"></a><span class="co">#&gt; Prasinophytes     0.0000 0.0000 0.0000 0.0457 0.2059 0.0489 0.0000 0.0000</span></span>
+<span id="cb5-105"><a href="#cb5-105" tabindex="-1"></a><span class="co">#&gt; Chlorophytes      0.0000 0.0000 0.0000 0.0126 0.0000 0.4155 0.0000 0.0000</span></span>
+<span id="cb5-106"><a href="#cb5-106" tabindex="-1"></a><span class="co">#&gt; Cryptophytes      0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.3671</span></span>
+<span id="cb5-107"><a href="#cb5-107" tabindex="-1"></a><span class="co">#&gt; Diatoms-B         0.0000 0.0000 0.7592 0.0000 0.0000 0.0000 0.0000 0.0000</span></span>
+<span id="cb5-108"><a href="#cb5-108" tabindex="-1"></a><span class="co">#&gt; Dinoflagellates-A 0.4663 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000</span></span>
+<span id="cb5-109"><a href="#cb5-109" tabindex="-1"></a><span class="co">#&gt; Haptophytes       0.0000 0.1092 0.1425 0.0000 0.0000 0.0000 0.5119 0.0000</span></span>
+<span id="cb5-110"><a href="#cb5-110" tabindex="-1"></a><span class="co">#&gt; Pelagophytes      0.0000 0.4980 1.0255 0.0000 0.0000 0.0000 0.0000 0.0000</span></span>
+<span id="cb5-111"><a href="#cb5-111" tabindex="-1"></a><span class="co">#&gt; Syn               0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000</span></span>
+<span id="cb5-112"><a href="#cb5-112" tabindex="-1"></a><span class="co">#&gt;                        Zea  Chl.b Tchla</span></span>
+<span id="cb5-113"><a href="#cb5-113" tabindex="-1"></a><span class="co">#&gt; Prasinophytes     0.067900 0.8958     1</span></span>
+<span id="cb5-114"><a href="#cb5-114" tabindex="-1"></a><span class="co">#&gt; Chlorophytes      0.028900 0.4417     1</span></span>
+<span id="cb5-115"><a href="#cb5-115" tabindex="-1"></a><span class="co">#&gt; Cryptophytes      0.000000 0.0000     1</span></span>
+<span id="cb5-116"><a href="#cb5-116" tabindex="-1"></a><span class="co">#&gt; Diatoms-B         0.000000 0.0000     1</span></span>
+<span id="cb5-117"><a href="#cb5-117" tabindex="-1"></a><span class="co">#&gt; Dinoflagellates-A 0.000000 0.0000     1</span></span>
+<span id="cb5-118"><a href="#cb5-118" tabindex="-1"></a><span class="co">#&gt; Haptophytes       0.000000 0.0000     1</span></span>
+<span id="cb5-119"><a href="#cb5-119" tabindex="-1"></a><span class="co">#&gt; Pelagophytes      0.000000 0.0000     1</span></span>
+<span id="cb5-120"><a href="#cb5-120" tabindex="-1"></a><span class="co">#&gt; Syn               1.202323 0.0000     1</span></span>
+<span id="cb5-121"><a href="#cb5-121" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">Class abundances</span><span class="st">`</span></span>
+<span id="cb5-122"><a href="#cb5-122" tabindex="-1"></a><span class="co">#&gt;       Prasinophytes Chlorophytes Cryptophytes  Diatoms-B Dinoflagellates-A</span></span>
+<span id="cb5-123"><a href="#cb5-123" tabindex="-1"></a><span class="co">#&gt;  [1,]    0.12074645  0.015580068 0.0089492820 0.04485425      0.0010075936</span></span>
+<span id="cb5-124"><a href="#cb5-124" tabindex="-1"></a><span class="co">#&gt;  [2,]    0.02795080  0.002780364 0.0074785740 0.02971192      0.0005167257</span></span>
+<span id="cb5-125"><a href="#cb5-125" tabindex="-1"></a><span class="co">#&gt;  [3,]    0.09042333  0.000000000 0.0264179736 0.40508529      0.0015944291</span></span>
+<span id="cb5-126"><a href="#cb5-126" tabindex="-1"></a><span class="co">#&gt;  [4,]    0.09545703  0.000000000 0.0232754452 0.40683348      0.0013702356</span></span>
+<span id="cb5-127"><a href="#cb5-127" tabindex="-1"></a><span class="co">#&gt;  [5,]    0.07155292  0.000000000 0.0045744825 0.36014533      0.0002518340</span></span>
+<span id="cb5-128"><a href="#cb5-128" tabindex="-1"></a><span class="co">#&gt;  [6,]    0.05335821  0.000000000 0.0001159389 0.25333253      0.0227043626</span></span>
+<span id="cb5-129"><a href="#cb5-129" tabindex="-1"></a><span class="co">#&gt;  [7,]    0.02937519  0.001161003 0.0015224921 0.12222063      0.0000000000</span></span>
+<span id="cb5-130"><a href="#cb5-130" tabindex="-1"></a><span class="co">#&gt;  [8,]    0.01369832  0.000000000 0.0094634377 0.41515276      0.0000000000</span></span>
+<span id="cb5-131"><a href="#cb5-131" tabindex="-1"></a><span class="co">#&gt;  [9,]    0.01726606  0.004145716 0.1475985557 0.63621347      0.0000000000</span></span>
+<span id="cb5-132"><a href="#cb5-132" tabindex="-1"></a><span class="co">#&gt; [10,]    0.03061522  0.001982231 0.0066422907 0.07518459      0.0000000000</span></span>
+<span id="cb5-133"><a href="#cb5-133" tabindex="-1"></a><span class="co">#&gt; [11,]    0.15574125  0.000000000 0.0742903154 0.52941714      0.0000000000</span></span>
+<span id="cb5-134"><a href="#cb5-134" tabindex="-1"></a><span class="co">#&gt; [12,]    0.09665547  0.000000000 0.0000000000 0.28484305      0.0000000000</span></span>
+<span id="cb5-135"><a href="#cb5-135" tabindex="-1"></a><span class="co">#&gt; [13,]    0.09363211  0.000000000 0.0000000000 0.15586707      0.0000000000</span></span>
+<span id="cb5-136"><a href="#cb5-136" tabindex="-1"></a><span class="co">#&gt; [14,]    0.15696121  0.000000000 0.0206760428 0.25392939      0.0000000000</span></span>
+<span id="cb5-137"><a href="#cb5-137" tabindex="-1"></a><span class="co">#&gt; [15,]    0.20047272  0.056760591 0.0916334100 0.79407911      0.0003999825</span></span>
+<span id="cb5-138"><a href="#cb5-138" tabindex="-1"></a><span class="co">#&gt; [16,]    0.21648164  0.023560878 0.0178322077 0.20681435      0.0000000000</span></span>
+<span id="cb5-139"><a href="#cb5-139" tabindex="-1"></a><span class="co">#&gt; [17,]    0.48244600  0.092869668 0.0461068103 0.76083698      0.0003868454</span></span>
+<span id="cb5-140"><a href="#cb5-140" tabindex="-1"></a><span class="co">#&gt; [18,]    0.15547980  0.000000000 0.0243604282 0.18692022      0.0000000000</span></span>
+<span id="cb5-141"><a href="#cb5-141" tabindex="-1"></a><span class="co">#&gt; [19,]    0.30108398  0.014266165 0.0501354406 0.43047384      0.0000000000</span></span>
+<span id="cb5-142"><a href="#cb5-142" tabindex="-1"></a><span class="co">#&gt; [20,]    0.23784396  0.019902877 0.0649344188 0.32677945      0.0000000000</span></span>
+<span id="cb5-143"><a href="#cb5-143" tabindex="-1"></a><span class="co">#&gt; [21,]    0.27948589  0.008919027 0.0431208844 0.37381578      0.0000000000</span></span>
+<span id="cb5-144"><a href="#cb5-144" tabindex="-1"></a><span class="co">#&gt; [22,]    0.16721352  0.013101838 0.0494822617 0.73144816      0.0000000000</span></span>
+<span id="cb5-145"><a href="#cb5-145" tabindex="-1"></a><span class="co">#&gt; [23,]    0.13671208  0.010179673 0.0399885758 0.50113963      0.0001521378</span></span>
+<span id="cb5-146"><a href="#cb5-146" tabindex="-1"></a><span class="co">#&gt; [24,]    0.05013018  0.011451818 0.0262006845 0.12210907      0.0000000000</span></span>
+<span id="cb5-147"><a href="#cb5-147" tabindex="-1"></a><span class="co">#&gt; [25,]    0.08822780  0.010545878 0.0355236483 0.18512920      0.0000000000</span></span>
+<span id="cb5-148"><a href="#cb5-148" tabindex="-1"></a><span class="co">#&gt; [26,]    0.08773089  0.000000000 0.0209070851 0.17514701      0.0000000000</span></span>
+<span id="cb5-149"><a href="#cb5-149" tabindex="-1"></a><span class="co">#&gt; [27,]    0.04358390  0.002363648 0.0145162028 0.09512850      0.0000000000</span></span>
+<span id="cb5-150"><a href="#cb5-150" tabindex="-1"></a><span class="co">#&gt; [28,]    0.04247643  0.006073948 0.0118096785 0.08821962      0.0000000000</span></span>
+<span id="cb5-151"><a href="#cb5-151" tabindex="-1"></a><span class="co">#&gt; [29,]    0.10120167  0.001995820 0.0244264533 0.03911670      0.0000000000</span></span>
+<span id="cb5-152"><a href="#cb5-152" tabindex="-1"></a><span class="co">#&gt;       Haptophytes Pelagophytes         Syn</span></span>
+<span id="cb5-153"><a href="#cb5-153" tabindex="-1"></a><span class="co">#&gt;  [1,]  0.23163915  0.035733201 0.000000000</span></span>
+<span id="cb5-154"><a href="#cb5-154" tabindex="-1"></a><span class="co">#&gt;  [2,]  0.05050987  0.025638311 0.001123433</span></span>
+<span id="cb5-155"><a href="#cb5-155" tabindex="-1"></a><span class="co">#&gt;  [3,]  0.05429790  0.034881076 0.000000000</span></span>
+<span id="cb5-156"><a href="#cb5-156" tabindex="-1"></a><span class="co">#&gt;  [4,]  0.05544695  0.038316859 0.000000000</span></span>
+<span id="cb5-157"><a href="#cb5-157" tabindex="-1"></a><span class="co">#&gt;  [5,]  0.04552364  0.045246150 0.002905640</span></span>
+<span id="cb5-158"><a href="#cb5-158" tabindex="-1"></a><span class="co">#&gt;  [6,]  0.03853817  0.037650785 0.000000000</span></span>
+<span id="cb5-159"><a href="#cb5-159" tabindex="-1"></a><span class="co">#&gt;  [7,]  0.04113832  0.016282370 0.000000000</span></span>
+<span id="cb5-160"><a href="#cb5-160" tabindex="-1"></a><span class="co">#&gt;  [8,]  0.21959043  0.029804457 0.000790597</span></span>
+<span id="cb5-161"><a href="#cb5-161" tabindex="-1"></a><span class="co">#&gt;  [9,]  0.23454288  0.043625025 0.001508291</span></span>
+<span id="cb5-162"><a href="#cb5-162" tabindex="-1"></a><span class="co">#&gt; [10,]  0.06902391  0.022244474 0.000307286</span></span>
+<span id="cb5-163"><a href="#cb5-163" tabindex="-1"></a><span class="co">#&gt; [11,]  0.21516755  0.043391122 0.021653360</span></span>
+<span id="cb5-164"><a href="#cb5-164" tabindex="-1"></a><span class="co">#&gt; [12,]  0.05466003  0.026572864 0.018472902</span></span>
+<span id="cb5-165"><a href="#cb5-165" tabindex="-1"></a><span class="co">#&gt; [13,]  0.05096682  0.031620164 0.008821733</span></span>
+<span id="cb5-166"><a href="#cb5-166" tabindex="-1"></a><span class="co">#&gt; [14,]  0.03589015  0.017158552 0.004674831</span></span>
+<span id="cb5-167"><a href="#cb5-167" tabindex="-1"></a><span class="co">#&gt; [15,]  0.20888108  0.009648876 0.019288423</span></span>
+<span id="cb5-168"><a href="#cb5-168" tabindex="-1"></a><span class="co">#&gt; [16,]  0.07256180  0.033864063 0.000000000</span></span>
+<span id="cb5-169"><a href="#cb5-169" tabindex="-1"></a><span class="co">#&gt; [17,]  0.28400360  0.074689583 0.000000000</span></span>
+<span id="cb5-170"><a href="#cb5-170" tabindex="-1"></a><span class="co">#&gt; [18,]  0.14171073  0.065381980 0.003817537</span></span>
+<span id="cb5-171"><a href="#cb5-171" tabindex="-1"></a><span class="co">#&gt; [19,]  0.20642366  0.071547876 0.000000000</span></span>
+<span id="cb5-172"><a href="#cb5-172" tabindex="-1"></a><span class="co">#&gt; [20,]  0.24446020  0.094652291 0.002327784</span></span>
+<span id="cb5-173"><a href="#cb5-173" tabindex="-1"></a><span class="co">#&gt; [21,]  0.16693359  0.079773232 0.000000000</span></span>
+<span id="cb5-174"><a href="#cb5-174" tabindex="-1"></a><span class="co">#&gt; [22,]  0.25020131  0.033157355 0.004864028</span></span>
+<span id="cb5-175"><a href="#cb5-175" tabindex="-1"></a><span class="co">#&gt; [23,]  0.18624166  0.041445890 0.003206848</span></span>
+<span id="cb5-176"><a href="#cb5-176" tabindex="-1"></a><span class="co">#&gt; [24,]  0.10014259  0.032455683 0.006165759</span></span>
+<span id="cb5-177"><a href="#cb5-177" tabindex="-1"></a><span class="co">#&gt; [25,]  0.10185501  0.029801469 0.004559263</span></span>
+<span id="cb5-178"><a href="#cb5-178" tabindex="-1"></a><span class="co">#&gt; [26,]  0.03967877  0.022788118 0.003521716</span></span>
+<span id="cb5-179"><a href="#cb5-179" tabindex="-1"></a><span class="co">#&gt; [27,]  0.03948655  0.036313095 0.005326631</span></span>
+<span id="cb5-180"><a href="#cb5-180" tabindex="-1"></a><span class="co">#&gt; [28,]  0.03847017  0.019824419 0.004832830</span></span>
+<span id="cb5-181"><a href="#cb5-181" tabindex="-1"></a><span class="co">#&gt; [29,]  0.09206533  0.040456258 0.002206732</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>Results<span class="sc">$</span>Figure</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="example-with-clustering" class="section level3">
+<h3>Example with clustering</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>Clust1 <span class="ot">&lt;-</span> <span class="fu">Cluster</span>(Sm, <span class="at">min_cluster_size =</span> <span class="dv">14</span>)<span class="sc">$</span>cluster.list[[<span class="dv">1</span>]]</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt;  ..done.</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co"># Remove the cluster column/label</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>Clust1<span class="sc">$</span>Clust <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="st">&quot;7683&quot;</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>Results <span class="ot">&lt;-</span> <span class="fu">simulated_annealing</span>(Clust1, <span class="at">niter =</span> <span class="dv">1</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">condition number</span><span class="st">`</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; [1] 775.0989</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>Results<span class="sc">$</span>RMSE</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.02931221</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>Results<span class="sc">$</span>MAE</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt;       X19but         Fuco         Neox          Pra         Viol       X19hex </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 0.0002362059 0.0011316712 0.0219593170 0.0092003730 0.0119773703 0.0005471443 </span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt;         Allo          Zea        Chl.b        Tchla </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 0.0014131269 0.0016726465 0.0071885131 0.0093028209</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>Results<span class="sc">$</span>Error</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt;              X19but          Fuco          Neox           Pra          Viol</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt;  [1,] -1.523425e-03 -0.0075488424 -0.0015256991 -0.0069232355 -1.430632e-03</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt;  [2,] -1.022852e-04 -0.0124565197 -0.0009659486 -0.0015130112 -6.418238e-04</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;  [3,]  3.540295e-05  0.0043114489  0.0026770207 -0.0009588724 -6.209766e-05</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt;  [4,]  5.110645e-05  0.0062238545  0.0025589805 -0.0012191255 -1.721382e-04</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt;  [5,]  7.009945e-06  0.0008536864  0.0101379274 -0.0042890464 -6.367299e-03</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt;  [6,]  6.977635e-06  0.0008497516  0.0070272037 -0.0041565195 -8.262652e-03</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt;  [7,]  1.886379e-05  0.0022972738  0.0060376330  0.0033059910  2.927713e-04</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt;  [8,]  1.132354e-05  0.0013790051  0.0037214791  0.0072366021  1.411981e-03</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt;  [9,]  3.163756e-05  0.0038528908  0.0020295535  0.0044849217  6.459691e-04</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; [10,]  4.142973e-05  0.0050454031  0.0114474175 -0.0020852577 -7.279872e-04</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; [11,]  1.036135e-05  0.0012618275  0.0026761173 -0.0037145212 -8.431022e-04</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; [12,]  7.173850e-06  0.0008736471  0.0018299967  0.0054676304  1.099524e-03</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; [13,]  2.564600e-05  0.0031232252  0.0062678993  0.0030200950  4.828223e-04</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; [14,]  2.772155e-05  0.0033759906  0.0045343175  0.0044026867  8.458793e-04</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; [15,]  2.151393e-05  0.0026200135  0.0060872331 -0.0064374398 -1.504036e-03</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt;              X19hex          Allo           Zea        Chl.b       Tchla</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt;  [1,]  0.0004008719 -3.600846e-04 -2.889637e-03  0.020540903  0.14301480</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt;  [2,] -0.0017396675 -5.941839e-04 -3.551667e-04  0.002734724  0.23599203</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt;  [3,]  0.0006021335  2.056589e-04 -1.603441e-03  0.002042016 -0.08168153</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt;  [4,]  0.0008692185  2.968818e-04  1.774578e-04  0.002401422 -0.11791255</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt;  [5,]  0.0001192252  0.000000e+00  2.434075e-05  0.007029294 -0.01617331</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="co">#&gt;  [6,]  0.0001186756  0.000000e+00  2.422856e-05  0.010676933 -0.01609877</span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a><span class="co">#&gt;  [7,]  0.0003208354  1.095814e-04  6.550106e-05 -0.013782001 -0.04352245</span></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a><span class="co">#&gt;  [8,]  0.0001925907  6.577942e-05  3.931891e-05 -0.023149024 -0.02612561</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a><span class="co">#&gt;  [9,]  0.0005380916  1.837853e-04  1.098556e-04 -0.013332753 -0.07299403</span></span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a><span class="co">#&gt; [10,]  0.0007046370  2.406689e-04  1.438571e-04 -0.002926352 -0.09558648</span></span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a><span class="co">#&gt; [11,]  0.0001762258  6.018998e-05  3.597788e-05  0.008362224 -0.02390565</span></span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a><span class="co">#&gt; [12,]  0.0001220129  4.167352e-05  2.490988e-05 -0.016689617 -0.01655147</span></span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a><span class="co">#&gt; [13,]  0.0004361871  1.489798e-04  8.905101e-05 -0.013182292 -0.05917032</span></span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a><span class="co">#&gt; [14,]  0.0004714881  1.610369e-04  9.625799e-05 -0.015535395 -0.06395903</span></span>
+<span id="cb8-42"><a href="#cb8-42" tabindex="-1"></a><span class="co">#&gt; [15,]  0.0003659090  1.249763e-04  7.470318e-05  0.013344474 -0.04963684</span></span>
+<span id="cb8-43"><a href="#cb8-43" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">F matrix</span><span class="st">`</span></span>
+<span id="cb8-45"><a href="#cb8-45" tabindex="-1"></a><span class="co">#&gt;               X19but      Fuco   Neox    Pra   Viol X19hex   Allo       Zea</span></span>
+<span id="cb8-46"><a href="#cb8-46" tabindex="-1"></a><span class="co">#&gt; Prasinophytes 0.0000 0.0000000 0.0833 0.2534 0.0646 0.0000 0.0000 0.0499000</span></span>
+<span id="cb8-47"><a href="#cb8-47" tabindex="-1"></a><span class="co">#&gt; Chlorophytes  0.0000 0.0000000 0.0466 0.0000 0.4584 0.0000 0.0000 0.0471000</span></span>
+<span id="cb8-48"><a href="#cb8-48" tabindex="-1"></a><span class="co">#&gt; Cryptophytes  0.0000 0.0000000 0.0000 0.0000 0.0000 0.0000 0.4413 0.0000000</span></span>
+<span id="cb8-49"><a href="#cb8-49" tabindex="-1"></a><span class="co">#&gt; Diatoms-B     0.0000 0.9187736 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000000</span></span>
+<span id="cb8-50"><a href="#cb8-50" tabindex="-1"></a><span class="co">#&gt; Haptophytes   0.1475 0.1066000 0.0000 0.0000 0.0000 0.3851 0.0000 0.0000000</span></span>
+<span id="cb8-51"><a href="#cb8-51" tabindex="-1"></a><span class="co">#&gt; Pelagophytes  0.4475 0.7825000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000000</span></span>
+<span id="cb8-52"><a href="#cb8-52" tabindex="-1"></a><span class="co">#&gt; Syn           0.0000 0.0000000 0.0000 0.0000 0.0000 0.0000 0.0000 0.7382825</span></span>
+<span id="cb8-53"><a href="#cb8-53" tabindex="-1"></a><span class="co">#&gt;                   Chl.b Tchla</span></span>
+<span id="cb8-54"><a href="#cb8-54" tabindex="-1"></a><span class="co">#&gt; Prasinophytes 0.9012507     1</span></span>
+<span id="cb8-55"><a href="#cb8-55" tabindex="-1"></a><span class="co">#&gt; Chlorophytes  0.3239000     1</span></span>
+<span id="cb8-56"><a href="#cb8-56" tabindex="-1"></a><span class="co">#&gt; Cryptophytes  0.0000000     1</span></span>
+<span id="cb8-57"><a href="#cb8-57" tabindex="-1"></a><span class="co">#&gt; Diatoms-B     0.0000000     1</span></span>
+<span id="cb8-58"><a href="#cb8-58" tabindex="-1"></a><span class="co">#&gt; Haptophytes   0.0000000     1</span></span>
+<span id="cb8-59"><a href="#cb8-59" tabindex="-1"></a><span class="co">#&gt; Pelagophytes  0.0000000     1</span></span>
+<span id="cb8-60"><a href="#cb8-60" tabindex="-1"></a><span class="co">#&gt; Syn           0.0000000     1</span></span>
+<span id="cb8-61"><a href="#cb8-61" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">Class abundances</span><span class="st">`</span></span>
+<span id="cb8-62"><a href="#cb8-62" tabindex="-1"></a><span class="co">#&gt;       Prasinophytes Chlorophytes Cryptophytes  Diatoms-B Haptophytes</span></span>
+<span id="cb8-63"><a href="#cb8-63" tabindex="-1"></a><span class="co">#&gt;  [1,]    0.09930272 1.068874e-02  0.006363460 0.06429746  0.27785762</span></span>
+<span id="cb8-64"><a href="#cb8-64" tabindex="-1"></a><span class="co">#&gt;  [2,]    0.02385789 2.064693e-03  0.005599122 0.03158020  0.06264301</span></span>
+<span id="cb8-65"><a href="#cb8-65" tabindex="-1"></a><span class="co">#&gt;  [3,]    0.02840233 8.947001e-04  0.001373075 0.11469603  0.05598677</span></span>
+<span id="cb8-66"><a href="#cb8-66" tabindex="-1"></a><span class="co">#&gt;  [4,]    0.02697807 1.575229e-03  0.005217359 0.07350711  0.08665906</span></span>
+<span id="cb8-67"><a href="#cb8-67" tabindex="-1"></a><span class="co">#&gt;  [5,]    0.09205709 0.000000e+00  0.000000000 0.25995208  0.07545773</span></span>
+<span id="cb8-68"><a href="#cb8-68" tabindex="-1"></a><span class="co">#&gt;  [6,]    0.08575470 0.000000e+00  0.000000000 0.14413076  0.06821451</span></span>
+<span id="cb8-69"><a href="#cb8-69" tabindex="-1"></a><span class="co">#&gt;  [7,]    0.15890114 0.000000e+00  0.018515354 0.23575259  0.05077494</span></span>
+<span id="cb8-70"><a href="#cb8-70" tabindex="-1"></a><span class="co">#&gt;  [8,]    0.21595974 2.205069e-02  0.015248345 0.19419604  0.09837315</span></span>
+<span id="cb8-71"><a href="#cb8-71" tabindex="-1"></a><span class="co">#&gt;  [9,]    0.14256614 0.000000e+00  0.019418978 0.18174602  0.18034316</span></span>
+<span id="cb8-72"><a href="#cb8-72" tabindex="-1"></a><span class="co">#&gt; [10,]    0.04657242 1.042926e-02  0.020788529 0.11766396  0.12665220</span></span>
+<span id="cb8-73"><a href="#cb8-73" tabindex="-1"></a><span class="co">#&gt; [11,]    0.08150750 9.065517e-03  0.029698418 0.17623715  0.13580089</span></span>
+<span id="cb8-74"><a href="#cb8-74" tabindex="-1"></a><span class="co">#&gt; [12,]    0.08771238 4.341287e-05  0.018150564 0.16240006  0.05482885</span></span>
+<span id="cb8-75"><a href="#cb8-75" tabindex="-1"></a><span class="co">#&gt; [13,]    0.04138553 2.356500e-03  0.011744965 0.08899647  0.05086462</span></span>
+<span id="cb8-76"><a href="#cb8-76" tabindex="-1"></a><span class="co">#&gt; [14,]    0.04123314 5.625151e-03  0.009695953 0.08184466  0.05023462</span></span>
+<span id="cb8-77"><a href="#cb8-77" tabindex="-1"></a><span class="co">#&gt; [15,]    0.08605965 1.143040e-03  0.018875993 0.04985933  0.11388143</span></span>
+<span id="cb8-78"><a href="#cb8-78" tabindex="-1"></a><span class="co">#&gt;       Pelagophytes         Syn</span></span>
+<span id="cb8-79"><a href="#cb8-79" tabindex="-1"></a><span class="co">#&gt;  [1,]   0.00000000 0.000000000</span></span>
+<span id="cb8-80"><a href="#cb8-80" tabindex="-1"></a><span class="co">#&gt;  [2,]   0.01747675 0.002488332</span></span>
+<span id="cb8-81"><a href="#cb8-81" tabindex="-1"></a><span class="co">#&gt;  [3,]   0.01034710 0.000000000</span></span>
+<span id="cb8-82"><a href="#cb8-82" tabindex="-1"></a><span class="co">#&gt;  [4,]   0.01081244 0.001250720</span></span>
+<span id="cb8-83"><a href="#cb8-83" tabindex="-1"></a><span class="co">#&gt;  [5,]   0.01954348 0.034193940</span></span>
+<span id="cb8-84"><a href="#cb8-84" tabindex="-1"></a><span class="co">#&gt;  [6,]   0.02546097 0.017346957</span></span>
+<span id="cb8-85"><a href="#cb8-85" tabindex="-1"></a><span class="co">#&gt;  [7,]   0.01267124 0.012674905</span></span>
+<span id="cb8-86"><a href="#cb8-86" tabindex="-1"></a><span class="co">#&gt;  [8,]   0.02399220 0.001294774</span></span>
+<span id="cb8-87"><a href="#cb8-87" tabindex="-1"></a><span class="co">#&gt;  [9,]   0.04359414 0.010002248</span></span>
+<span id="cb8-88"><a href="#cb8-88" tabindex="-1"></a><span class="co">#&gt; [10,]   0.01599641 0.010552990</span></span>
+<span id="cb8-89"><a href="#cb8-89" tabindex="-1"></a><span class="co">#&gt; [11,]   0.01342110 0.009911687</span></span>
+<span id="cb8-90"><a href="#cb8-90" tabindex="-1"></a><span class="co">#&gt; [12,]   0.01823761 0.008400717</span></span>
+<span id="cb8-91"><a href="#cb8-91" tabindex="-1"></a><span class="co">#&gt; [13,]   0.03190633 0.009464102</span></span>
+<span id="cb8-92"><a href="#cb8-92" tabindex="-1"></a><span class="co">#&gt; [14,]   0.01439403 0.008679522</span></span>
+<span id="cb8-93"><a href="#cb8-93" tabindex="-1"></a><span class="co">#&gt; [15,]   0.02546206 0.006187463</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Results<span class="sc">$</span>Figure</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+<div id="example-using-non-default-values" class="section level3">
+<h3>Example using non-default values</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co">#Create Fm (F matrix). Alternatively, a .csv file can be uploaded.</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>Fu <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">Per =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">X19but =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">Fuco =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">Pra =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">X19hex =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">Allo =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="at">Zea =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">Chl.b =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  <span class="at">Tchla =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="fu">rownames</span>(Fu) <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  <span class="st">&quot;Prasinophytes&quot;</span>, <span class="st">&quot;Chlorophytes&quot;</span>, <span class="st">&quot;Cryptophytes&quot;</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  , <span class="st">&quot;Diatoms-B&quot;</span>, <span class="st">&quot;Dinoflagellates-A&quot;</span>,</span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  <span class="st">&quot;Haptophytes&quot;</span>, <span class="st">&quot;Pelagophytes&quot;</span>, <span class="st">&quot;Syn&quot;</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>)</span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>Min_max <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>  <span class="at">Class =</span> <span class="fu">c</span>(</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>    <span class="st">&quot;Syn&quot;</span>, <span class="st">&quot;Chlorophytes&quot;</span>, <span class="st">&quot;Chlorophytes&quot;</span>, <span class="st">&quot;Prasinophytes&quot;</span>, <span class="st">&quot;Prasinophytes&quot;</span>,</span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>    <span class="st">&quot;Prasinophytes&quot;</span>, <span class="st">&quot;Cryptophytes&quot;</span>, <span class="st">&quot;Diatoms-B&quot;</span>, <span class="st">&quot;Diatoms-B&quot;</span>, <span class="st">&quot;Pelagophytes&quot;</span>,</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>    <span class="st">&quot;Pelagophytes&quot;</span>, <span class="st">&quot;Pelagophytes&quot;</span>, <span class="st">&quot;Dinoflagellates-A&quot;</span>, <span class="st">&quot;Haptophytes&quot;</span>,</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>    <span class="st">&quot;Haptophytes&quot;</span>, <span class="st">&quot;Haptophytes&quot;</span>, <span class="st">&quot;Haptophytes&quot;</span>, <span class="st">&quot;Diatoms-B&quot;</span>, <span class="st">&quot;Cryptophytes&quot;</span>,</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>    <span class="st">&quot;Prasinophytes&quot;</span>, <span class="st">&quot;Chlorophytes&quot;</span>, <span class="st">&quot;Syn&quot;</span>, <span class="st">&quot;Dinoflagellates-A&quot;</span>, <span class="st">&quot;Pelagophytes&quot;</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>  ),</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>  <span class="at">Pig_Abbrev =</span> <span class="fu">c</span>(</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>    <span class="st">&quot;Zea&quot;</span>, <span class="st">&quot;Zea&quot;</span>, <span class="st">&quot;Chl.b&quot;</span>, <span class="st">&quot;Pra&quot;</span>, <span class="st">&quot;Zea&quot;</span>, <span class="st">&quot;Chl.b&quot;</span>, <span class="st">&quot;Allo&quot;</span>, <span class="st">&quot;Chl.c3&quot;</span>,</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>    <span class="st">&quot;Fuco&quot;</span>, <span class="st">&quot;Chl.c3&quot;</span>, <span class="st">&quot;X19but&quot;</span>, <span class="st">&quot;Fuco&quot;</span>, <span class="st">&quot;Per&quot;</span>, <span class="st">&quot;X19but&quot;</span>, <span class="st">&quot;X19hex&quot;</span>,</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>    <span class="st">&quot;Fuco&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>, <span class="st">&quot;Tchla&quot;</span>,</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a>    <span class="st">&quot;Tchla&quot;</span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>  ),</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a>  <span class="at">min =</span> <span class="fu">as.numeric</span>(<span class="fu">c</span>(</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a>    <span class="fl">0.0800</span>, <span class="fl">0.0063</span>, <span class="fl">0.1666</span>, <span class="fl">0.0642</span>, <span class="fl">0.0151</span>, <span class="fl">0.4993</span>, <span class="fl">0.2118</span>, <span class="fl">0.0189</span>,</span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a>    <span class="fl">0.3315</span>, <span class="fl">0.1471</span>, <span class="fl">0.2457</span>, <span class="fl">0.3092</span>, <span class="fl">0.3421</span>, <span class="fl">0.0819</span>, <span class="fl">0.2107</span>, <span class="fl">0.0090</span>,</span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a>    <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a>  )),</span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a>  <span class="at">max =</span> <span class="fu">as.numeric</span>(<span class="fu">c</span>(</span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a>    <span class="fl">1.2123</span>, <span class="fl">0.0722</span>, <span class="fl">0.9254</span>, <span class="fl">0.4369</span>, <span class="fl">0.1396</span>, <span class="fl">0.9072</span>, <span class="fl">0.5479</span>, <span class="fl">0.1840</span>,</span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a>    <span class="fl">0.9332</span>, <span class="fl">0.2967</span>, <span class="fl">1.0339</span>, <span class="fl">1.2366</span>, <span class="fl">0.8650</span>, <span class="fl">0.2872</span>, <span class="fl">1.3766</span>, <span class="fl">0.4689</span>,</span>
+<span id="cb10-42"><a href="#cb10-42" tabindex="-1"></a>    <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span>, <span class="fl">1.0000</span></span>
+<span id="cb10-43"><a href="#cb10-43" tabindex="-1"></a>  ))</span>
+<span id="cb10-44"><a href="#cb10-44" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="st">&quot;7683&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>Results <span class="ot">&lt;-</span> <span class="fu">simulated_annealing</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">S =</span> Sm, </span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">F =</span> Fu,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">user_defined_min_max =</span> Min_max,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">do_matrix_checks =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">niter =</span> <span class="dv">1</span>,</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">step =</span> <span class="fl">0.01</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="at">weight.upper.bound =</span> <span class="dv">30</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">condition number</span><span class="st">`</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#&gt; [1] 1246.385</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>Results<span class="sc">$</span>RMSE</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.02172976</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>Results<span class="sc">$</span>MAE</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt;          Per       X19but         Fuco          Pra       X19hex         Allo </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 4.199727e-03 3.273723e-05 4.756433e-04 3.683680e-03 8.040712e-05 5.794571e-04 </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt;          Zea        Chl.b        Tchla </span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 3.949947e-03 1.778484e-03 3.083291e-03</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>Results<span class="sc">$</span>Error</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt;                 Per        X19but          Fuco           Pra        X19hex</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; 1257  -1.540353e-04 -4.443987e-05 -5.001243e-03  2.387518e-03 -1.892591e-04</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; 1278  -4.407218e-04 -1.271502e-04 -1.430942e-02  2.905187e-03 -5.415031e-04</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; 1908  -2.789685e-04 -8.048366e-05 -9.057595e-03  2.016773e-03 -3.427612e-04</span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; 1909  -2.566387e-04 -7.404139e-05 -8.332585e-03  1.971743e-03 -3.153251e-04</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; 1914  -6.912664e-05 -1.994334e-05 -2.244415e-03  4.556748e-04 -8.493406e-05</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; 1915  -3.495682e-05 -1.008520e-05 -1.134983e-03  6.271547e-04 -4.295051e-05</span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; 5614   0.000000e+00  3.199972e-05  3.601235e-03  4.125569e-04  1.362794e-04</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; 5647   0.000000e+00  7.954242e-06  8.951668e-04  2.019758e-03  3.387527e-05</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt; 5653   0.000000e+00  1.592528e-06  1.792223e-04  1.446277e-03  6.782205e-06</span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; 6770   0.000000e+00  2.576880e-05  2.900009e-03 -4.195474e-04  1.097433e-04</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; 8425   0.000000e+00  2.422799e-05  2.726607e-03 -5.535725e-04  1.031814e-04</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt; 8426   0.000000e+00  3.898821e-05  4.387716e-03 -8.908209e-04  1.660417e-04</span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; 9538   0.000000e+00  3.437586e-05  3.868644e-03 -7.854359e-04  1.463988e-04</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; 9568   0.000000e+00  2.975730e-05  3.348873e-03  6.603140e-03  1.267294e-04</span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; 9625  -1.863894e-04 -5.377415e-05 -6.051719e-03  1.505595e-03 -2.290116e-04</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt; 9626  -2.192229e-06 -6.324676e-07 -7.117763e-05  1.112948e-02 -2.693533e-06</span></span>
+<span id="cb12-28"><a href="#cb12-28" tabindex="-1"></a><span class="co">#&gt; 9838  -1.352676e-04 -3.902530e-05 -4.391890e-03  1.844555e-03 -1.661997e-04</span></span>
+<span id="cb12-29"><a href="#cb12-29" tabindex="-1"></a><span class="co">#&gt; 9839   0.000000e+00  1.660517e-05  1.868739e-03  6.898358e-03  7.071758e-05</span></span>
+<span id="cb12-30"><a href="#cb12-30" tabindex="-1"></a><span class="co">#&gt; 9845  -3.749984e-05 -1.081887e-05 -1.217551e-03  3.350522e-03 -4.607506e-05</span></span>
+<span id="cb12-31"><a href="#cb12-31" tabindex="-1"></a><span class="co">#&gt; 9860   0.000000e+00  1.415749e-05  1.593278e-03 -8.877482e-05  6.029347e-05</span></span>
+<span id="cb12-32"><a href="#cb12-32" tabindex="-1"></a><span class="co">#&gt; 9861  -9.153627e-06 -2.640862e-06 -2.972014e-04  5.411871e-03 -1.124682e-05</span></span>
+<span id="cb12-33"><a href="#cb12-33" tabindex="-1"></a><span class="co">#&gt; 9904  -2.136934e-05 -6.165148e-06 -6.938230e-04  1.408642e-04 -2.625593e-05</span></span>
+<span id="cb12-34"><a href="#cb12-34" tabindex="-1"></a><span class="co">#&gt; 9913  -4.430863e-05 -1.278323e-05 -1.438619e-03  2.920773e-04 -5.444082e-05</span></span>
+<span id="cb12-35"><a href="#cb12-35" tabindex="-1"></a><span class="co">#&gt; 9938   0.000000e+00  2.419299e-05  2.722668e-03 -5.527728e-04  1.030323e-04</span></span>
+<span id="cb12-36"><a href="#cb12-36" tabindex="-1"></a><span class="co">#&gt; 9980   0.000000e+00  2.553948e-05  2.874202e-03 -5.835380e-04  1.087667e-04</span></span>
+<span id="cb12-37"><a href="#cb12-37" tabindex="-1"></a><span class="co">#&gt; 10081  0.000000e+00  8.869575e-06  9.981780e-04  8.070696e-03  3.777346e-05</span></span>
+<span id="cb12-38"><a href="#cb12-38" tabindex="-1"></a><span class="co">#&gt; 10082  0.000000e+00  2.948775e-05  3.318538e-03  5.160518e-03  1.255815e-04</span></span>
+<span id="cb12-39"><a href="#cb12-39" tabindex="-1"></a><span class="co">#&gt; 10089  0.000000e+00  2.182335e-05  2.455990e-03  6.128883e-03  9.294058e-05</span></span>
+<span id="cb12-40"><a href="#cb12-40" tabindex="-1"></a><span class="co">#&gt; 10121  0.000000e+00  4.369520e-05  4.917439e-03 -9.983685e-04  1.860877e-04</span></span>
+<span id="cb12-41"><a href="#cb12-41" tabindex="-1"></a><span class="co">#&gt;                Allo           Zea         Chl.b        Tchla</span></span>
+<span id="cb12-42"><a href="#cb12-42" tabindex="-1"></a><span class="co">#&gt; 1257  -2.400743e-04 -6.818570e-03  2.371929e-05  0.071755809</span></span>
+<span id="cb12-43"><a href="#cb12-43" tabindex="-1"></a><span class="co">#&gt; 1278  -6.868943e-04 -4.513605e-04 -7.234509e-03  0.205305833</span></span>
+<span id="cb12-44"><a href="#cb12-44" tabindex="-1"></a><span class="co">#&gt; 1908  -4.347911e-04 -1.149024e-03 -4.248508e-03  0.129954705</span></span>
+<span id="cb12-45"><a href="#cb12-45" tabindex="-1"></a><span class="co">#&gt; 1909  -3.999885e-04 -1.622101e-03 -3.691928e-03  0.119552557</span></span>
+<span id="cb12-46"><a href="#cb12-46" tabindex="-1"></a><span class="co">#&gt; 1914  -1.077385e-04 -7.079531e-05 -1.134723e-03  0.032201955</span></span>
+<span id="cb12-47"><a href="#cb12-47" tabindex="-1"></a><span class="co">#&gt; 1915  -5.448253e-05 -1.961634e-03  1.641019e-04  0.016284284</span></span>
+<span id="cb12-48"><a href="#cb12-48" tabindex="-1"></a><span class="co">#&gt; 5614   1.728698e-04 -4.950825e-03  3.566148e-03 -0.051669059</span></span>
+<span id="cb12-49"><a href="#cb12-49" tabindex="-1"></a><span class="co">#&gt; 5647   4.297063e-05  2.823614e-05 -3.824066e-03 -0.012843491</span></span>
+<span id="cb12-50"><a href="#cb12-50" tabindex="-1"></a><span class="co">#&gt; 5653   8.603197e-06  5.653189e-06 -2.789617e-03 -0.002571410</span></span>
+<span id="cb12-51"><a href="#cb12-51" tabindex="-1"></a><span class="co">#&gt; 6770   1.392089e-04 -7.300278e-04  1.780952e-03 -0.041608161</span></span>
+<span id="cb12-52"><a href="#cb12-52" tabindex="-1"></a><span class="co">#&gt; 8425   1.308851e-04  8.600506e-05  1.378509e-03 -0.039120259</span></span>
+<span id="cb12-53"><a href="#cb12-53" tabindex="-1"></a><span class="co">#&gt; 8426   0.000000e+00  1.384012e-04  2.218326e-03 -0.062953169</span></span>
+<span id="cb12-54"><a href="#cb12-54" tabindex="-1"></a><span class="co">#&gt; 9538   0.000000e+00  1.220282e-04  1.955896e-03 -0.055505746</span></span>
+<span id="cb12-55"><a href="#cb12-55" tabindex="-1"></a><span class="co">#&gt; 9568   1.607557e-04  1.056331e-04 -1.245496e-02 -0.048048281</span></span>
+<span id="cb12-56"><a href="#cb12-56" tabindex="-1"></a><span class="co">#&gt; 9625  -2.905002e-04 -1.908887e-04 -3.597588e-03  0.086827618</span></span>
+<span id="cb12-57"><a href="#cb12-57" tabindex="-1"></a><span class="co">#&gt; 9626  -3.416735e-06 -7.188582e-03 -1.599866e-02  0.001021228</span></span>
+<span id="cb12-58"><a href="#cb12-58" tabindex="-1"></a><span class="co">#&gt; 9838  -2.108236e-04 -4.764176e-03 -4.480252e-04  0.063013059</span></span>
+<span id="cb12-59"><a href="#cb12-59" tabindex="-1"></a><span class="co">#&gt; 9839   8.970494e-05  5.894541e-05 -1.319301e-02 -0.026811910</span></span>
+<span id="cb12-60"><a href="#cb12-60" tabindex="-1"></a><span class="co">#&gt; 9845  -5.844601e-05 -3.814780e-03 -3.685879e-03  0.017468928</span></span>
+<span id="cb12-61"><a href="#cb12-61" tabindex="-1"></a><span class="co">#&gt; 9860   7.648201e-05 -1.089069e-03  1.242080e-03 -0.022859707</span></span>
+<span id="cb12-62"><a href="#cb12-62" tabindex="-1"></a><span class="co">#&gt; 9861  -1.426654e-05 -4.000149e-03 -7.419989e-03  0.004264126</span></span>
+<span id="cb12-63"><a href="#cb12-63" tabindex="-1"></a><span class="co">#&gt; 9904  -3.330554e-05 -2.188518e-05 -3.507807e-04  0.009954692</span></span>
+<span id="cb12-64"><a href="#cb12-64" tabindex="-1"></a><span class="co">#&gt; 9913  -6.905795e-05 -4.537820e-05 -7.273323e-04  0.020640730</span></span>
+<span id="cb12-65"><a href="#cb12-65" tabindex="-1"></a><span class="co">#&gt; 9938   1.306961e-04  8.588080e-05  1.376517e-03 -0.039063743</span></span>
+<span id="cb12-66"><a href="#cb12-66" tabindex="-1"></a><span class="co">#&gt; 9980   1.379701e-04  9.066061e-05  1.453129e-03 -0.041237884</span></span>
+<span id="cb12-67"><a href="#cb12-67" tabindex="-1"></a><span class="co">#&gt; 10081  4.791547e-05  3.148541e-05 -1.556718e-02 -0.014321454</span></span>
+<span id="cb12-68"><a href="#cb12-68" tabindex="-1"></a><span class="co">#&gt; 10082  1.592996e-04  1.046763e-04 -9.655891e-03 -0.047613044</span></span>
+<span id="cb12-69"><a href="#cb12-69" tabindex="-1"></a><span class="co">#&gt; 10089  1.178947e-04  7.746901e-05 -1.163294e-02 -0.035237552</span></span>
+<span id="cb12-70"><a href="#cb12-70" tabindex="-1"></a><span class="co">#&gt; 10121  2.360515e-04  1.551102e-04  2.486142e-03 -0.070553421</span></span>
+<span id="cb12-71"><a href="#cb12-71" tabindex="-1"></a></span>
+<span id="cb12-72"><a href="#cb12-72" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">F matrix</span><span class="st">`</span></span>
+<span id="cb12-73"><a href="#cb12-73" tabindex="-1"></a><span class="co">#&gt;                      Per X19but   Fuco    Pra X19hex   Allo    Zea  Chl.b Tchla</span></span>
+<span id="cb12-74"><a href="#cb12-74" tabindex="-1"></a><span class="co">#&gt; Prasinophytes     0.0000 0.0000 0.0000 0.2279  0.000 0.0000 0.0919 0.8640     1</span></span>
+<span id="cb12-75"><a href="#cb12-75" tabindex="-1"></a><span class="co">#&gt; Chlorophytes      0.0000 0.0000 0.0000 0.0000  0.000 0.0000 0.0118 0.2268     1</span></span>
+<span id="cb12-76"><a href="#cb12-76" tabindex="-1"></a><span class="co">#&gt; Cryptophytes      0.0000 0.0000 0.0000 0.0000  0.000 0.3321 0.0000 0.0000     1</span></span>
+<span id="cb12-77"><a href="#cb12-77" tabindex="-1"></a><span class="co">#&gt; Diatoms-B         0.0000 0.0000 0.8419 0.0000  0.000 0.0000 0.0000 0.0000     1</span></span>
+<span id="cb12-78"><a href="#cb12-78" tabindex="-1"></a><span class="co">#&gt; Dinoflagellates-A 0.5176 0.0000 0.0000 0.0000  0.000 0.0000 0.0000 0.0000     1</span></span>
+<span id="cb12-79"><a href="#cb12-79" tabindex="-1"></a><span class="co">#&gt; Haptophytes       0.0000 0.1310 0.1053 0.0000  0.894 0.0000 0.0000 0.0000     1</span></span>
+<span id="cb12-80"><a href="#cb12-80" tabindex="-1"></a><span class="co">#&gt; Pelagophytes      0.0000 0.6849 0.5205 0.0000  0.000 0.0000 0.0000 0.0000     1</span></span>
+<span id="cb12-81"><a href="#cb12-81" tabindex="-1"></a><span class="co">#&gt; Syn               0.0000 0.0000 0.0000 0.0000  0.000 0.0000 0.5054 0.0000     1</span></span>
+<span id="cb12-82"><a href="#cb12-82" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">Class abundances</span><span class="st">`</span></span>
+<span id="cb12-83"><a href="#cb12-83" tabindex="-1"></a><span class="co">#&gt;       Prasinophytes Chlorophytes Cryptophytes  Diatoms-B Dinoflagellates-A</span></span>
+<span id="cb12-84"><a href="#cb12-84" tabindex="-1"></a><span class="co">#&gt;  [1,]    0.06105833 0.1990376885 0.0070029011 0.05694234      2.482309e-04</span></span>
+<span id="cb12-85"><a href="#cb12-85" tabindex="-1"></a><span class="co">#&gt;  [2,]    0.01828905 0.0350763698 0.0069735610 0.04052284      2.746169e-04</span></span>
+<span id="cb12-86"><a href="#cb12-86" tabindex="-1"></a><span class="co">#&gt;  [3,]    0.04003214 0.1832299487 0.0233391511 0.31687606      6.315298e-04</span></span>
+<span id="cb12-87"><a href="#cb12-87" tabindex="-1"></a><span class="co">#&gt;  [4,]    0.05174144 0.1584216877 0.0214629525 0.33514306      5.949039e-04</span></span>
+<span id="cb12-88"><a href="#cb12-88" tabindex="-1"></a><span class="co">#&gt;  [5,]    0.05852206 0.0525924650 0.0048017729 0.35050118      1.348690e-04</span></span>
+<span id="cb12-89"><a href="#cb12-89" tabindex="-1"></a><span class="co">#&gt;  [6,]    0.04628561 0.0289996797 0.0001257441 0.25875623      2.036438e-02</span></span>
+<span id="cb12-90"><a href="#cb12-90" tabindex="-1"></a><span class="co">#&gt;  [7,]    0.03102206 0.0000000000 0.0019730073 0.13798702      0.000000e+00</span></span>
+<span id="cb12-91"><a href="#cb12-91" tabindex="-1"></a><span class="co">#&gt;  [8,]    0.01627271 0.0000000000 0.0127580863 0.47748504      0.000000e+00</span></span>
+<span id="cb12-92"><a href="#cb12-92" tabindex="-1"></a><span class="co">#&gt;  [9,]    0.02028450 0.0000000000 0.1788768956 0.68834971      0.000000e+00</span></span>
+<span id="cb12-93"><a href="#cb12-93" tabindex="-1"></a><span class="co">#&gt; [10,]    0.03304855 0.0009664837 0.0081552127 0.09931081      0.000000e+00</span></span>
+<span id="cb12-94"><a href="#cb12-94" tabindex="-1"></a><span class="co">#&gt; [11,]    0.14517490 0.0642408514 0.0832722198 0.53387535      0.000000e+00</span></span>
+<span id="cb12-95"><a href="#cb12-95" tabindex="-1"></a><span class="co">#&gt; [12,]    0.08117559 0.0451685318 0.0000000000 0.26589364      0.000000e+00</span></span>
+<span id="cb12-96"><a href="#cb12-96" tabindex="-1"></a><span class="co">#&gt; [13,]    0.07939196 0.0384453911 0.0000000000 0.15590970      0.000000e+00</span></span>
+<span id="cb12-97"><a href="#cb12-97" tabindex="-1"></a><span class="co">#&gt; [14,]    0.16292612 0.0000000000 0.0243302871 0.26087948      0.000000e+00</span></span>
+<span id="cb12-98"><a href="#cb12-98" tabindex="-1"></a><span class="co">#&gt; [15,]    0.23598080 0.0000000000 0.1144974301 0.83377275      1.014099e-03</span></span>
+<span id="cb12-99"><a href="#cb12-99" tabindex="-1"></a><span class="co">#&gt; [16,]    0.23590672 0.0000000000 0.0216475409 0.23819570      4.798564e-06</span></span>
+<span id="cb12-100"><a href="#cb12-100" tabindex="-1"></a><span class="co">#&gt; [17,]    0.53052134 0.0653254799 0.0567307653 0.83706307      9.394163e-04</span></span>
+<span id="cb12-101"><a href="#cb12-101" tabindex="-1"></a><span class="co">#&gt; [18,]    0.16187643 0.0000000000 0.0285198402 0.24256379      0.000000e+00</span></span>
+<span id="cb12-102"><a href="#cb12-102" tabindex="-1"></a><span class="co">#&gt; [19,]    0.32075065 0.0000000000 0.0603616163 0.49828819      1.553036e-04</span></span>
+<span id="cb12-103"><a href="#cb12-103" tabindex="-1"></a><span class="co">#&gt; [20,]    0.21661296 0.1104834137 0.0703885346 0.37615700      0.000000e+00</span></span>
+<span id="cb12-104"><a href="#cb12-104" tabindex="-1"></a><span class="co">#&gt; [21,]    0.29258255 0.0000000000 0.0508481651 0.43735952      3.321923e-05</span></span>
+<span id="cb12-105"><a href="#cb12-105" tabindex="-1"></a><span class="co">#&gt; [22,]    0.14814749 0.1387954008 0.0560138433 0.71755858      9.554773e-05</span></span>
+<span id="cb12-106"><a href="#cb12-106" tabindex="-1"></a><span class="co">#&gt; [23,]    0.11891731 0.1062375285 0.0445581140 0.49948575      1.474983e-04</span></span>
+<span id="cb12-107"><a href="#cb12-107" tabindex="-1"></a><span class="co">#&gt; [24,]    0.05295877 0.0077005651 0.0308795322 0.15235979      0.000000e+00</span></span>
+<span id="cb12-108"><a href="#cb12-108" tabindex="-1"></a><span class="co">#&gt; [25,]    0.07661799 0.0601020386 0.0381094140 0.19072492      0.000000e+00</span></span>
+<span id="cb12-109"><a href="#cb12-109" tabindex="-1"></a><span class="co">#&gt; [26,]    0.09081140 0.0000000000 0.0242271266 0.18713018      0.000000e+00</span></span>
+<span id="cb12-110"><a href="#cb12-110" tabindex="-1"></a><span class="co">#&gt; [27,]    0.04316930 0.0000000000 0.0159703163 0.11605087      0.000000e+00</span></span>
+<span id="cb12-111"><a href="#cb12-111" tabindex="-1"></a><span class="co">#&gt; [28,]    0.04569986 0.0000000000 0.0136732671 0.10235937      0.000000e+00</span></span>
+<span id="cb12-112"><a href="#cb12-112" tabindex="-1"></a><span class="co">#&gt; [29,]    0.07940435 0.0555712748 0.0240573205 0.06305842      0.000000e+00</span></span>
+<span id="cb12-113"><a href="#cb12-113" tabindex="-1"></a><span class="co">#&gt;       Haptophytes Pelagophytes         Syn</span></span>
+<span id="cb12-114"><a href="#cb12-114" tabindex="-1"></a><span class="co">#&gt;  [1,]  0.10417599   0.03004452 0.000000000</span></span>
+<span id="cb12-115"><a href="#cb12-115" tabindex="-1"></a><span class="co">#&gt;  [2,]  0.02454977   0.01838375 0.001640034</span></span>
+<span id="cb12-116"><a href="#cb12-116" tabindex="-1"></a><span class="co">#&gt;  [3,]  0.02474948   0.02384169 0.000000000</span></span>
+<span id="cb12-117"><a href="#cb12-117" tabindex="-1"></a><span class="co">#&gt;  [4,]  0.02644976   0.02688619 0.000000000</span></span>
+<span id="cb12-118"><a href="#cb12-118" tabindex="-1"></a><span class="co">#&gt;  [5,]  0.02514533   0.03427030 0.004232025</span></span>
+<span id="cb12-119"><a href="#cb12-119" tabindex="-1"></a><span class="co">#&gt;  [6,]  0.02194347   0.02922489 0.000000000</span></span>
+<span id="cb12-120"><a href="#cb12-120" tabindex="-1"></a><span class="co">#&gt;  [7,]  0.02572588   0.01499203 0.000000000</span></span>
+<span id="cb12-121"><a href="#cb12-121" tabindex="-1"></a><span class="co">#&gt;  [8,]  0.14368310   0.03689270 0.001408358</span></span>
+<span id="cb12-122"><a href="#cb12-122" tabindex="-1"></a><span class="co">#&gt;  [9,]  0.14705969   0.04714670 0.003182514</span></span>
+<span id="cb12-123"><a href="#cb12-123" tabindex="-1"></a><span class="co">#&gt; [10,]  0.04321779   0.02130115 0.000000000</span></span>
+<span id="cb12-124"><a href="#cb12-124" tabindex="-1"></a><span class="co">#&gt; [11,]  0.12510901   0.04264135 0.045347038</span></span>
+<span id="cb12-125"><a href="#cb12-125" tabindex="-1"></a><span class="co">#&gt; [12,]  0.02981800   0.02091672 0.038231851</span></span>
+<span id="cb12-126"><a href="#cb12-126" tabindex="-1"></a><span class="co">#&gt; [13,]  0.02730204   0.02387892 0.015979875</span></span>
+<span id="cb12-127"><a href="#cb12-127" tabindex="-1"></a><span class="co">#&gt; [14,]  0.02195285   0.01488997 0.004311483</span></span>
+<span id="cb12-128"><a href="#cb12-128" tabindex="-1"></a><span class="co">#&gt; [15,]  0.13347029   0.01970454 0.042724278</span></span>
+<span id="cb12-129"><a href="#cb12-129" tabindex="-1"></a><span class="co">#&gt; [16,]  0.04501592   0.03034426 0.000000000</span></span>
+<span id="cb12-130"><a href="#cb12-130" tabindex="-1"></a><span class="co">#&gt; [17,]  0.17633325   0.07442616 0.000000000</span></span>
+<span id="cb12-131"><a href="#cb12-131" tabindex="-1"></a><span class="co">#&gt; [18,]  0.08546430   0.05722432 0.002022010</span></span>
+<span id="cb12-132"><a href="#cb12-132" tabindex="-1"></a><span class="co">#&gt; [19,]  0.12743977   0.06693543 0.000000000</span></span>
+<span id="cb12-133"><a href="#cb12-133" tabindex="-1"></a><span class="co">#&gt; [20,]  0.13765510   0.07960397 0.000000000</span></span>
+<span id="cb12-134"><a href="#cb12-134" tabindex="-1"></a><span class="co">#&gt; [21,]  0.10124657   0.06997838 0.000000000</span></span>
+<span id="cb12-135"><a href="#cb12-135" tabindex="-1"></a><span class="co">#&gt; [22,]  0.14614628   0.03732076 0.005390572</span></span>
+<span id="cb12-136"><a href="#cb12-136" tabindex="-1"></a><span class="co">#&gt; [23,]  0.10723226   0.03975156 0.002736478</span></span>
+<span id="cb12-137"><a href="#cb12-137" tabindex="-1"></a><span class="co">#&gt; [24,]  0.06098498   0.03021600 0.013556133</span></span>
+<span id="cb12-138"><a href="#cb12-138" tabindex="-1"></a><span class="co">#&gt; [25,]  0.05682837   0.02600165 0.007257886</span></span>
+<span id="cb12-139"><a href="#cb12-139" tabindex="-1"></a><span class="co">#&gt; [26,]  0.02379894   0.01928751 0.004518430</span></span>
+<span id="cb12-140"><a href="#cb12-140" tabindex="-1"></a><span class="co">#&gt; [27,]  0.02258920   0.02823695 0.010701883</span></span>
+<span id="cb12-141"><a href="#cb12-141" tabindex="-1"></a><span class="co">#&gt; [28,]  0.02304180   0.01696960 0.009963192</span></span>
+<span id="cb12-142"><a href="#cb12-142" tabindex="-1"></a><span class="co">#&gt; [29,]  0.04749637   0.03065805 0.001223182</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>Results<span class="sc">$</span>Figure</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+</div>
+</div>
+<div id="helper-functions" class="section level1 tabset">
+<h1 class="tabset">Helper functions</h1>
+<div id="matrix_checks" class="section level2">
+<h2>Matrix_checks</h2>
+<p>This function will perform checks on the <strong>F</strong> and
+<strong>S</strong> matrices. If the columns sum is 0 or very small it
+will be eliminated from both the S and F matrix. To use this function,
+naming for both pigments and phytoplankton classes must follow the same
+conventions as the default values. The output of this function will be
+new <strong>S</strong> and <strong>F</strong> matrices.</p>
+<p>Arguments:</p>
+<p>S = S matrix</p>
+<p>F = F matrix</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>MC <span class="ot">&lt;-</span> <span class="fu">Matrix_checks</span>(Sm, Fm)  </span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>Snew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Snew</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>Fnew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Fnew  </span></code></pre></div>
+</div>
+<div id="steep_desc" class="section level2">
+<h2>Steep_Desc</h2>
+<p>This algorithm will perform the steepest descent algorithm without
+being bound by any limits. The results may show unrealistic pig:Chl
+<em>a</em> ratios for certain groups, although the error can often be
+very low.</p>
+<p>Arguments:</p>
+<p>F = F matrix</p>
+<p>S = S matrix</p>
+<p>num.loops = the number of loops/iterations to perform</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>MC <span class="ot">&lt;-</span> <span class="fu">Matrix_checks</span>(Sm, Fm)  </span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>Snew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Snew</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>Fnew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Fnew</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>SDRes <span class="ot">&lt;-</span> <span class="fu">Steepest_Desc</span>(Fnew, Snew, <span class="at">num.loops =</span> <span class="dv">10</span>)</span></code></pre></div>
+</div>
+<div id="bounded_weights" class="section level2">
+<h2>Bounded_weights</h2>
+<p>This function determines the weights to use for the S matrix, for
+which the default upper bound is 30 in the simulated_annealing()
+function call.</p>
+<p>Arguments:</p>
+<p>S = sample matrix</p>
+<p>weight.upper.bound = maximum weights upper bound</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">Bounded_weights</span>(Sm, <span class="at">weight.upper.bound =</span> <span class="dv">30</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co">#&gt;         Per      X19but        Fuco        Neox         Pra        Viol </span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt;   30.000000   30.000000    3.405156   30.000000   30.000000   30.000000 </span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt;      X19hex        Allo         Zea         Lut ChlcMGDG.18 ChlcMGDG.14 </span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt;   15.742517   30.000000   30.000000   30.000000   30.000000   30.000000 </span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt;       Chl.b       Tchla </span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt;    9.185585    1.000000</span></span></code></pre></div>
+</div>
+<div id="nnls_mf" class="section level2">
+<h2>NNLS_MF</h2>
+<p>This performs non-negative least least squares matrix factorization
+between the <strong>S</strong> and <strong>F</strong> matrices. Ensure
+that Chl <em>a</em> is the final column and that the columns in
+<strong>S</strong> and <strong>F</strong> are in the same order. If the
+weights are left blank then no weights will be used.</p>
+<p>Arguments:</p>
+<p>Fn = F matrix</p>
+<p>S = sample matrix</p>
+<p>cm = weights for each column</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>MC <span class="ot">&lt;-</span> <span class="fu">Matrix_checks</span>(Sm, Fm)  </span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>Snew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Snew</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>Fnew <span class="ot">&lt;-</span> MC<span class="sc">$</span>Fnew</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>cm <span class="ot">&lt;-</span> <span class="fu">Bounded_weights</span>(Snew, <span class="at">weight.upper.bound =</span> <span class="dv">30</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>Results <span class="ot">&lt;-</span> <span class="fu">NNLS_MF</span>(Fnew, Snew, cm)</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">F matrix</span><span class="st">`</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt;                   Per X19but Fuco Neox Pra Viol X19hex Allo Zea Chl.b Tchla</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; Prasinophytes       0      0    0    1   1    1      0    0   1     1     1</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; Chlorophytes        0      0    0    1   0    1      0    0   1     1     1</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a><span class="co">#&gt; Cryptophytes        0      0    0    0   0    0      0    1   0     0     1</span></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="co">#&gt; Diatoms-B           0      0    1    0   0    0      0    0   0     0     1</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt; Dinoflagellates-A   1      0    0    0   0    0      0    0   0     0     1</span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; Haptophytes         0      1    1    0   0    0      1    0   0     0     1</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="co">#&gt; Pelagophytes        0      1    1    0   0    0      0    0   0     0     1</span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="co">#&gt; Syn                 0      0    0    0   0    0      0    0   1     0     1</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a>Results<span class="sc">$</span>RMSE</span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="co">#&gt; [1] 0.1127568</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a>Results<span class="sc">$</span><span class="st">`</span><span class="at">C matrix</span><span class="st">`</span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="co">#&gt;       Prasinophytes Chlorophytes Cryptophytes Diatoms-B Dinoflagellates-A</span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a><span class="co">#&gt;  [1,]   0.088117948   0.00000000 0.0217204089 0.4901801      0.0037567947</span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="co">#&gt;  [2,]   0.055584649   0.00000000 0.0373938768 0.6222451      0.0027804911</span></span>
+<span id="cb17-23"><a href="#cb17-23" tabindex="-1"></a><span class="co">#&gt;  [3,]   0.023402989   0.00000000 0.0237891848 0.8898721      0.0015045577</span></span>
+<span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a><span class="co">#&gt;  [4,]   0.025080760   0.00000000 0.0208394859 0.8879702      0.0013748370</span></span>
+<span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a><span class="co">#&gt;  [5,]   0.027278768   0.00000000 0.0050338409 0.8891283      0.0007088272</span></span>
+<span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a><span class="co">#&gt;  [6,]   0.024427004   0.00000000 0.0006420380 0.8482800      0.0403115206</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a><span class="co">#&gt;  [7,]   0.029818901   0.00000000 0.0056863026 0.8501687      0.0004333909</span></span>
+<span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a><span class="co">#&gt;  [8,]   0.006998486   0.00000000 0.0097623255 0.8482667      0.0004993785</span></span>
+<span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a><span class="co">#&gt;  [9,]   0.007273723   0.00000000 0.0834778062 0.8126633      0.0005630781</span></span>
+<span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a><span class="co">#&gt; [10,]   0.041423150   0.00000000 0.0248502005 0.7213906      0.0007292296</span></span>
+<span id="cb17-31"><a href="#cb17-31" tabindex="-1"></a><span class="co">#&gt; [11,]   0.033785036   0.00000000 0.0480895900 0.7854960      0.0007137484</span></span>
+<span id="cb17-32"><a href="#cb17-32" tabindex="-1"></a><span class="co">#&gt; [12,]   0.047211598   0.00000000 0.0005753971 0.8297532      0.0005753971</span></span>
+<span id="cb17-33"><a href="#cb17-33" tabindex="-1"></a><span class="co">#&gt; [13,]   0.065913285   0.00000000 0.0008208615 0.7888618      0.0008208615</span></span>
+<span id="cb17-34"><a href="#cb17-34" tabindex="-1"></a><span class="co">#&gt; [14,]   0.088836617   0.00000000 0.0299819886 0.8287089      0.0006540520</span></span>
+<span id="cb17-35"><a href="#cb17-35" tabindex="-1"></a><span class="co">#&gt; [15,]   0.058417376   0.00000000 0.0440282484 0.8389594      0.0009788646</span></span>
+<span id="cb17-36"><a href="#cb17-36" tabindex="-1"></a><span class="co">#&gt; [16,]   0.125844391   0.00000000 0.0258929304 0.7449531      0.0010843156</span></span>
+<span id="cb17-37"><a href="#cb17-37" tabindex="-1"></a><span class="co">#&gt; [17,]   0.085675844   0.00000000 0.0205483370 0.7943691      0.0012253888</span></span>
+<span id="cb17-38"><a href="#cb17-38" tabindex="-1"></a><span class="co">#&gt; [18,]   0.080155362   0.00000000 0.0327531006 0.6997688      0.0009135323</span></span>
+<span id="cb17-39"><a href="#cb17-39" tabindex="-1"></a><span class="co">#&gt; [19,]   0.077226096   0.00000000 0.0355593296 0.7586179      0.0010293554</span></span>
+<span id="cb17-40"><a href="#cb17-40" tabindex="-1"></a><span class="co">#&gt; [20,]   0.065007214   0.00000000 0.0509516342 0.7059805      0.0011235075</span></span>
+<span id="cb17-41"><a href="#cb17-41" tabindex="-1"></a><span class="co">#&gt; [21,]   0.078274256   0.00000000 0.0339483113 0.7547636      0.0009751164</span></span>
+<span id="cb17-42"><a href="#cb17-42" tabindex="-1"></a><span class="co">#&gt; [22,]   0.031530158   0.00000000 0.0263143309 0.8543388      0.0008336558</span></span>
+<span id="cb17-43"><a href="#cb17-43" tabindex="-1"></a><span class="co">#&gt; [23,]   0.037075351   0.00000000 0.0290232371 0.8314658      0.0009196788</span></span>
+<span id="cb17-44"><a href="#cb17-44" tabindex="-1"></a><span class="co">#&gt; [24,]   0.062767108   0.00151289 0.0562106906 0.6948740      0.0008153781</span></span>
+<span id="cb17-45"><a href="#cb17-45" tabindex="-1"></a><span class="co">#&gt; [25,]   0.058367609   0.00000000 0.0575224093 0.7466852      0.0009684633</span></span>
+<span id="cb17-46"><a href="#cb17-46" tabindex="-1"></a><span class="co">#&gt; [26,]   0.069420509   0.00000000 0.0401302883 0.8048198      0.0007330733</span></span>
+<span id="cb17-47"><a href="#cb17-47" tabindex="-1"></a><span class="co">#&gt; [27,]   0.060138593   0.00000000 0.0395615803 0.7292408      0.0006281012</span></span>
+<span id="cb17-48"><a href="#cb17-48" tabindex="-1"></a><span class="co">#&gt; [28,]   0.075116512   0.00000000 0.0391858968 0.7480381      0.0007317574</span></span>
+<span id="cb17-49"><a href="#cb17-49" tabindex="-1"></a><span class="co">#&gt; [29,]   0.109413008   0.00000000 0.0750124557 0.5374235      0.0015472772</span></span>
+<span id="cb17-50"><a href="#cb17-50" tabindex="-1"></a><span class="co">#&gt;       Haptophytes Pelagophytes          Syn</span></span>
+<span id="cb17-51"><a href="#cb17-51" tabindex="-1"></a><span class="co">#&gt;  [1,]  0.39622477   0.00000000 0.0000000000</span></span>
+<span id="cb17-52"><a href="#cb17-52" tabindex="-1"></a><span class="co">#&gt;  [2,]  0.28199589   0.00000000 0.0000000000</span></span>
+<span id="cb17-53"><a href="#cb17-53" tabindex="-1"></a><span class="co">#&gt;  [3,]  0.06143118   0.00000000 0.0000000000</span></span>
+<span id="cb17-54"><a href="#cb17-54" tabindex="-1"></a><span class="co">#&gt;  [4,]  0.06473471   0.00000000 0.0000000000</span></span>
+<span id="cb17-55"><a href="#cb17-55" tabindex="-1"></a><span class="co">#&gt;  [5,]  0.06518414   0.01266611 0.0000000000</span></span>
+<span id="cb17-56"><a href="#cb17-56" tabindex="-1"></a><span class="co">#&gt;  [6,]  0.07389414   0.01244533 0.0000000000</span></span>
+<span id="cb17-57"><a href="#cb17-57" tabindex="-1"></a><span class="co">#&gt;  [7,]  0.11389271   0.00000000 0.0000000000</span></span>
+<span id="cb17-58"><a href="#cb17-58" tabindex="-1"></a><span class="co">#&gt;  [8,]  0.13447311   0.00000000 0.0000000000</span></span>
+<span id="cb17-59"><a href="#cb17-59" tabindex="-1"></a><span class="co">#&gt;  [9,]  0.09602212   0.00000000 0.0000000000</span></span>
+<span id="cb17-60"><a href="#cb17-60" tabindex="-1"></a><span class="co">#&gt; [10,]  0.21160678   0.00000000 0.0000000000</span></span>
+<span id="cb17-61"><a href="#cb17-61" tabindex="-1"></a><span class="co">#&gt; [11,]  0.10185148   0.00000000 0.0300641351</span></span>
+<span id="cb17-62"><a href="#cb17-62" tabindex="-1"></a><span class="co">#&gt; [12,]  0.07127730   0.00000000 0.0506071021</span></span>
+<span id="cb17-63"><a href="#cb17-63" tabindex="-1"></a><span class="co">#&gt; [13,]  0.11859426   0.00000000 0.0249889572</span></span>
+<span id="cb17-64"><a href="#cb17-64" tabindex="-1"></a><span class="co">#&gt; [14,]  0.05181846   0.00000000 0.0000000000</span></span>
+<span id="cb17-65"><a href="#cb17-65" tabindex="-1"></a><span class="co">#&gt; [15,]  0.05761614   0.00000000 0.0000000000</span></span>
+<span id="cb17-66"><a href="#cb17-66" tabindex="-1"></a><span class="co">#&gt; [16,]  0.10222524   0.00000000 0.0000000000</span></span>
+<span id="cb17-67"><a href="#cb17-67" tabindex="-1"></a><span class="co">#&gt; [17,]  0.09818131   0.00000000 0.0000000000</span></span>
+<span id="cb17-68"><a href="#cb17-68" tabindex="-1"></a><span class="co">#&gt; [18,]  0.18640925   0.00000000 0.0000000000</span></span>
+<span id="cb17-69"><a href="#cb17-69" tabindex="-1"></a><span class="co">#&gt; [19,]  0.12756732   0.00000000 0.0000000000</span></span>
+<span id="cb17-70"><a href="#cb17-70" tabindex="-1"></a><span class="co">#&gt; [20,]  0.17693716   0.00000000 0.0000000000</span></span>
+<span id="cb17-71"><a href="#cb17-71" tabindex="-1"></a><span class="co">#&gt; [21,]  0.13203875   0.00000000 0.0000000000</span></span>
+<span id="cb17-72"><a href="#cb17-72" tabindex="-1"></a><span class="co">#&gt; [22,]  0.08698308   0.00000000 0.0000000000</span></span>
+<span id="cb17-73"><a href="#cb17-73" tabindex="-1"></a><span class="co">#&gt; [23,]  0.10151595   0.00000000 0.0000000000</span></span>
+<span id="cb17-74"><a href="#cb17-74" tabindex="-1"></a><span class="co">#&gt; [24,]  0.18371728   0.00000000 0.0001026917</span></span>
+<span id="cb17-75"><a href="#cb17-75" tabindex="-1"></a><span class="co">#&gt; [25,]  0.13645632   0.00000000 0.0000000000</span></span>
+<span id="cb17-76"><a href="#cb17-76" tabindex="-1"></a><span class="co">#&gt; [26,]  0.08489631   0.00000000 0.0000000000</span></span>
+<span id="cb17-77"><a href="#cb17-77" tabindex="-1"></a><span class="co">#&gt; [27,]  0.14672943   0.01494256 0.0087589477</span></span>
+<span id="cb17-78"><a href="#cb17-78" tabindex="-1"></a><span class="co">#&gt; [28,]  0.13363978   0.00000000 0.0032879586</span></span>
+<span id="cb17-79"><a href="#cb17-79" tabindex="-1"></a><span class="co">#&gt; [29,]  0.27660378   0.00000000 0.0000000000</span></span></code></pre></div>
+</div>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Hayward2023" class="csl-entry">
+Hayward, A., M. H. Pinkerton, and A. Gutierrez‐Rodriguez. 2023.
+<span>“<span class="nocase"><em>phytoclass</em>: A pigment‐based
+chemotaxonomic method to determine the biomass of phytoplankton
+classes</span>.”</span> <em>Limnology and Oceanography: Methods</em> 21
+(4): 220–41. <a href="https://doi.org/10.1002/lom3.10541">https://doi.org/10.1002/lom3.10541</a>.
+</div>
+<div id="ref-Langfelder2008" class="csl-entry">
+Langfelder, p., B. Zhang, and S. Horvath. 2008. <span>“<span class="nocase">Defining clusters from a hierarchical cluster tree: the
+Dynamic Tree Cut package for R</span>.”</span> <em>Bioinformatics</em>
+24 (5): 719–20.
+</div>
+<div id="ref-Mackey1996" class="csl-entry">
+Mackey, M. D., D. J. Mackey, H. W. Higgins, and S. W. Wright. 1996.
+<span>“CHEMTAX-a Program for Estimating Class Abundances from Chemical
+Markers: Application to HPLC Measurements of Phytoplankton.”</span>
+<em>Marine Ecology Progress Series</em> 144: 265–83. <a href="https://doi.org/10.3354/meps144265">https://doi.org/10.3354/meps144265</a>.
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
