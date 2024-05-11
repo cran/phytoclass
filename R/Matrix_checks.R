@@ -14,8 +14,13 @@
 # 'Fnew <- MC$Fnew 
 #' 
 
-
 Matrix_checks <- function(S, Fmat){
+  # Only keep columns of Fmat that are in S
+  S.colnames <- colnames(S)
+  Fmat.colnames <- colnames(Fmat)
+  keep.these.columns <- (Fmat.colnames %in% S.colnames)
+  Fmat[, keep.these.columns]
+  #
   ba <- rownames(Fmat)
   ba1<- which(ba =="Syn")
   if (ncol(S) > ncol(Fmat)){
@@ -49,7 +54,7 @@ Matrix_checks <- function(S, Fmat){
   #  S <- S[,-p]
   #}
   d <- colnames(S)
-  d1<- which(d =="Chl.b")
+  d1<- which(d =="Chl_b")
   b <- rownames(Fmat)
   b1<- which(b =="Chlorophytes")
   
@@ -69,28 +74,28 @@ Matrix_checks <- function(S, Fmat){
     Fmat <- Fmat[-c1,]
   }
   c <- rownames(Fmat)
-  c1 <- which(c =="Dinoflagellates-A")
+  c1 <- which(c =="Dinoflagellates-1")
   d <- colnames(Fmat)
   d1<- which(d =="Per")
   if(length(d1) ==0 & length(c1) >0){
     Fmat <- Fmat[-c1,]
   }
   c <- rownames(Fmat)
-  c1 <- which(c =="Diatoms-A")
+  c1 <- which(c =="Diatoms-1")
   d <- colnames(Fmat)
   d1<- which(d =="Chl.c1")
   if(length(d1) ==0 & length(c1) >0){
     Fmat <- Fmat[-c1,]
   }
   c <- rownames(Fmat)
-  c1 <- which(c =="Diatoms-B")
+  c1 <- which(c =="Diatoms-2")
   d <- colnames(Fmat)
   d1<- which(d =="Fuco")
   if(length(d1) ==0 & length(c1) >0){
     Fmat <- Fmat[-c1,]
   }
   c <- rownames(Fmat)
-  c1 <- which(c =="Dinoflagellates-A")
+  c1 <- which(c =="Dinoflagellates-1")
   d <- colnames(Fmat)
   d1<- which(d =="Per")
   if(length(d1) ==0 & length(c1) >0){
@@ -127,7 +132,7 @@ Matrix_checks <- function(S, Fmat){
     Fmat <- Fmat[-c1,]
   }  
   c <- rownames(Fmat)
-  c1 <- which(c =="Diatoms-A")
+  c1 <- which(c =="Diatoms-1")
   d <- colnames(Fmat)
   d1<- which(d =="Fuco")
   if(length(d1) ==0 & length(c1) >0){

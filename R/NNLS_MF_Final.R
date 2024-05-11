@@ -1,4 +1,4 @@
-#' Perform matrix factorisaiton for phytoplankton pigments and pigments ratios
+#' Perform matrix factorisation for phytoplankton pigments and pigments ratios
 #' 
 #' Performs the non-negative matrix factorisation for given phytoplankton 
 #' pigments and pigment ratios, to attain an estimate of phytoplankton 
@@ -63,7 +63,7 @@ NNLS_MF_Final <- function(Fn, S, S_Chl, cm){
     ggplot2::theme_bw()
   
   G <- S - (C_new2%*%Fn)
-  gs <- colMeans(abs(G))/colSums(S)
+  gs <- colMeans(abs((C_new2%*%Fn) - S))
   
   return(list("F matrix" = Fn, 
               "RMSE"  = error,

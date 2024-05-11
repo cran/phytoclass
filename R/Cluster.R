@@ -38,7 +38,7 @@ Cluster <- function(Data, min_cluster_size) {
   colnames(ndf) <- colnames(S[, ncol(S) - 1])
 
 
-  mscluster <- stats::dist(ndf, method = "manhattan")
+  mscluster <- stats::dist(ndf, method = "euclidean")
   mv.hclust <- stats::hclust(mscluster, method = "ward.D2")
 
   ev.clust <- Data
@@ -49,7 +49,7 @@ Cluster <- function(Data, min_cluster_size) {
     cutHeight = 70,
     minClusterSize = min_cluster_size,
     method = "hybrid",
-    distM = as.matrix(stats::dist(ndf, method = "manhattan")), 
+    distM = as.matrix(stats::dist(ndf, method = "euclidean")), 
     deepSplit = 4,
     pamStage = TRUE, 
     pamRespectsDendro = TRUE,
