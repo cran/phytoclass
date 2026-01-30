@@ -12,6 +12,17 @@ conjuction with the cluster function, which clusters larger datasets. To
 understand how to use your own matrices instead of the default dataset,
 please see the example in the vignette.
 
+-------------------------------------------------------------
+
+### Why Phytoclass?
+* phytoclass is entirely open-source, whereas other methods rely on external software
+* ability to run phytoclass from R allows scripting for improved reproducibility
+* scripting also enables batch processing for running many samples
+* phytoclass features improved gradient-descent algorithms for solving the least-squares problem
+  
+-------------------------------------------------------------
+
+### Additional Features
 When setting up your matrices, it is important to ensure that pigments
 are in the same order in the Sm and Fm matrices. Chlorophyll a must be
 the final column.
@@ -19,6 +30,9 @@ the final column.
 There is a separate function when Divinyl chlorophyll a and
 Prochlorococcus are used. Here Divynl chlorophyll a must be the 2nd to
 last column (see ‘Fp’).
+Note: If dvchl is detected as the second-to-last column in your input matrix, 
+the simulated_annealing() function will automatically call the 
+Prochlorococcus-optimized version (simulated_annealing_Prochloro()).
 
 The ’Steepest Descent’function is similar to that of CHEMTAX, and is
 unconstrained by minimum and maximum values, unlike the simualted
@@ -162,3 +176,11 @@ Results$Figure
 ```
 
 <img src="man/figures/README-example-1.png" width="100%" />
+
+
+## Citation
+If used please cite the following paper:
+
+```
+Hayward, Alexander, Matthew H. Pinkerton, and Andres Gutierrez‐Rodriguez. "phytoclass: A pigment‐based chemotaxonomic method to determine the biomass of phytoplankton classes." Limnology and Oceanography: Methods 21.4 (2023): 220-241.
+```

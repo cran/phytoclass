@@ -1,37 +1,91 @@
-#' Performs the steepest descent algorithm for a set number of iterations
+#' Performs the steepest descent algorithm for a set number of iterations to
+#' optimize the F matrix of pigment ratios.
 #' 
 #' @keywords internal
 #' 
-#' @param Fmat xx
-#' @param place xx
-#' @param S   xx
-#' @param cm   xx
-#' @param num.loops   xx
+#' @param Fmat Initial F matrix containing pigment ratios
+#' @param place Vector of indices where F matrix has non-zero values
+#' @param S Matrix of sample measurements (rows) and pigments (columns)
+#' @param S_weights Vector of weights for each pigment in NNLS optimization
+#' @param num.loops Maximum number of iterations to perform optimization
 #'
-#' @return
+#' @return A list containing:
+#'   \code{1}: The optimized F matrix
+#'   \code{2}: Final RMSE value
+#'   \code{3}: The C matrix (class abundances for each group)
 #'
 #' @examples
-Steepest_Descent <- function(Fmat, place, S, cm, num.loops){ 
-  loop <- 1
-  F.new <- NNLS_MF(Fmat, S, cm)
-  F.initial <- F.new
-  for (i in 1:num.loops){ #should always be small. It would be nice to allow the 
-    F.new <- Minimise_elements(F.initial[[1]], place, S, cm)
-    loop = loop +1
-    # print(loop)
-    loop_2 <- 1
-    # print(F.new[[2]])
-    while (F.new[[2]] > F.initial[[2]]) {
-      loop_2 = loop_2+1
-      #print(loop_2)
-      F.new <- Minimise_elements(F.initial[[1]], place, S, cm)
-      if (loop_2 > 5){F.new <-  Minimise_elements1(F.initial[[1]], place,S,cm)} # If it doesn't work the first time, it randomises at a lower rate
-      if (loop_2 > 10){F.new <- Minimise_elements2(F.initial[[1]], place,S,cm)} # and again, 
+#'  Fmat <- as.matrix(phytoclass::Fm)
+#'  S <- as.matrix(phytoclass::Sm)
+#'  S_weights <- as.numeric(phytoclass:::Bounded_weights(S))
+#'  place <- which(Fmat[, seq(ncol(Fmat) - 2)] > 0)
+#'  num.loops <- 2
+#'  # Run Steepest_Descent
+#'  result <- phytoclass:::Steepest_Descent(Fmat, place, S, S_weights, num.loops)
+
+Steepest_Descent <- function(Fmat, place, S, S_weights, num.loops) {
+  F_new     <- NNLS_MF(Fmat, S, S_weights)
+  F_initial <- F_new
+  
+  for (i in 1:num.loops) { # should always be small. It would be nice to allow the
+    F_new <- Minimise_elements_comb(F_initial[[1]], place, S, S_weights, c1_num = 3)
+
+    loop <- 1
+    while (F_new[[2]] > F_initial[[2]]) {
+
+      if (loop <= 5) {
+        F_new <- Minimise_elements_comb(F_initial[[1]], place, S, S_weights, c1_num = 3)
+      } else if (loop < 10) {
+        F_new <- Minimise_elements_comb(F_initial[[1]], place, S, S_weights, c1_num = 1)
+      } else if (loop <= 100) {
+        # If it doesn't work the first time, it randomises at a lower rate
+        F_new <- Minimise_elements_comb(F_initial[[1]], place, S, S_weights, c1_num = 2)
+      } else if (loop > 100) {
+        # it will continue for 100 iterations, and then stop
+        break
+      }
       
-      #     if (loop_2 > 20){F.new <- Minimise_elements2(F.new[[1]])}
-      if (loop_2 > 100){break} # it will continue for 100 itertions, and then stop
+      loop <- loop + 1
     }
-    F.initial <- F.new
+    F_initial <- F_new
   }
-  return(F.new)
+  return(F_new)
 }
+
+#' Stand-alone version of steepest descent algorithm. This is similar to the
+#' CHEMTAX steepest descent algorithm. It is not required to use this
+#' function, and as results are not bound by minimum and maximum, results may
+#' be unrealistic.
+#'
+#' @param S   Sample data matrix – a matrix of pigment samples
+#' @param Fmat   Pigment to Chl a matrix
+#' @param num.loops Number of loops/iterations to perform (no default)
+#'
+#' @return A list containing 
+#' \enumerate{
+#'  \item The F matrix (pigment: Chl *a*) ratios
+#'  \item RMSE (Root Mean Square Error)
+#'  \item Condition number
+#'  \item class abundances
+#'  \item Figure (plot of results)
+#'  \item MAE (Mean Absolute Error)
+#'  }
+#' @export
+#'
+#' @examples
+#' MC <- Matrix_checks(Sm,Fm)
+#' Snew <- MC$Snew
+#' Fnew <- MC$Fnew
+#' SDRes <- Steepest_Desc(Fnew,Snew, num.loops = 20)
+#' 
+Steepest_Desc <- function(Fmat, S, num.loops) {
+  S_Chl     <- S[, ncol(S)]
+  S_weights <- Bounded_weights(S, 30)
+  place     <- which(Fmat[, -ncol(Fmat)] > 0)
+  
+  F_new <- Steepest_Descent(Fmat, place, S, S_weights, num.loops)
+  F_new <- NNLS_MF_Final(as.matrix(F_new[[1]]), S, S_Chl, S_weights)
+  
+  return(F_new)
+}
+

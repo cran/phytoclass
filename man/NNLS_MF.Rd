@@ -6,14 +6,14 @@
 pigments and pigment ratios, to attain an estimate of phytoplankton
 class abundances.}
 \usage{
-NNLS_MF(Fn, S, cm = NULL)
+NNLS_MF(Fn, S, S_weights = NULL)
 }
 \arguments{
 \item{Fn}{Pigment to Chl a matrix}
 
 \item{S}{Sample data matrix – a matrix of pigment samples}
 
-\item{cm}{Weights for each column}
+\item{S_weights}{Weights for each column}
 }
 \value{
 A list containing
@@ -29,10 +29,12 @@ pigments and pigment ratios, to attain an estimate of phytoplankton
 class abundances.
 }
 \examples{
-MC <- Matrix_checks(Sm,Fm)
-Snew <- MC$Snew
-Fnew <- MC$Fnew
-cm <- Bounded_weights(Snew, weight.upper.bound = 30)
-NNLS_MF(Fnew, Snew, cm)
+ Fmat <- as.matrix(phytoclass::Fm)
+ S <- as.matrix(phytoclass::Sm)
+ S_weights <- as.numeric(phytoclass:::Bounded_weights(S))
+ place <- which(Fmat[, seq(ncol(Fmat) - 2)] > 0)
+ num.loops <- 2
+ # Run Steepest_Descent
+ result <- phytoclass:::Steepest_Descent(Fmat, place, S, S_weights, num.loops)
 
 }
